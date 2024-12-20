@@ -1,0 +1,47 @@
+// prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  phone         String?
+  address       String?
+  zipCode       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  evaluations   Evaluation[]
+  requests      Request[]
+}
+
+model Evaluation {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  plan        String    // Plano escolhido
+  platform    String    // Plataforma
+  status      String    // Status da avaliação
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Request {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  type        String    // Tipo de solicitação
+  status      String    // Status da solicitação
+  description String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
