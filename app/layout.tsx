@@ -1,6 +1,7 @@
 // app/layout.tsx
 import "@/app/globals.css";
 import { AuthProvider } from "@/components/providers/session-provider";
+
 import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
 import { Mulish } from "next/font/google";

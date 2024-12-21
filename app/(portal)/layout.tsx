@@ -2,8 +2,12 @@
 import "@/app/globals.css";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { UserNav } from "./dashboard/_components/user-nav"; // Ajustado o caminho
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // Importar authOptions
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Separator } from "@/components/ui/separator";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import Image from "next/image";
 
 export default async function PortalLayout({
   children,
@@ -19,21 +23,24 @@ export default async function PortalLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-zinc-800 bg-zinc-900/50">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <h1 className="text-xl font-semibold text-zinc-100">
-              Portal do Cliente
-            </h1>
-            <UserNav />
-          </div>
-        </div>
-      </header>
+    <SidebarProvider>
+      {/* Sidebar */}
+      <AppSidebar className="fixed rounded-2xl left-0 w-64 h-screen z-30 bg-zinc-900/95 border-r border-zinc-800 " />
 
-      <main className="flex-1">
-        <div className="container mx-auto px-4 py-8">{children}</div>
+      {/* Main Content */}
+      <main className="flex-1 rounded-2xl pl-6">
+        {/* Header */}
+        <div className="sticky top-0 z-20  flex h-16 items-center gap-4 border-b border-zinc-800 bg-background bg-black px-4">
+          <SidebarTrigger className="text-zinc-400 hover:text-zinc-100" />
+          <Separator orientation="vertical" className="h-6" />
+          <Image src="/logo.png" width={130} height={30} alt="Logo" />
+          Portal do Cliente - Traders House
+          <Breadcrumb />
+        </div>
+
+        {/* Content */}
+        <div className="p-4">{children}</div>
       </main>
-    </div>
+    </SidebarProvider>
   );
 }
