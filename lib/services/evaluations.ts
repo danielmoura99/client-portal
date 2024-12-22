@@ -1,4 +1,4 @@
-// client-portal/lib/services/evaluations.ts
+// lib/services/evaluations.ts
 const ADMIN_API_URL =
   process.env.NEXT_PUBLIC_ADMIN_API_URL || "http://localhost:3001";
 const API_KEY = process.env.API_KEY;
@@ -20,27 +20,26 @@ export async function getClientEvaluations(session: ClientSession) {
   if (session.user.cpf) queryParams.append("cpf", session.user.cpf);
 
   try {
-    console.log(
-      `Fazendo requisição para: ${ADMIN_API_URL}/api/client-evaluations?${queryParams}`
-    );
-
     const response = await fetch(
       `${ADMIN_API_URL}/api/client-evaluations?${queryParams}`,
       {
         headers: {
           Authorization: `Bearer ${API_KEY}`,
         },
-        cache: "no-store", // Desabilitar cache para teste
+        next: { revalidate: 0 }, // Desabilita o cache para sempre ter dados atualizados
       }
     );
 
-    console.log("Status da resposta:", response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
     const data = await response.json();
-    console.log("Dados recebidos:", data);
 
-    if (!response.ok) {
-      throw new Error(data.error || `HTTP error! status: ${response.status}`);
+    // Verifica se temos o array de avaliações
+    if (!data.evaluations) {
+      console.log("Nenhuma avaliação encontrada nos dados:", data);
+      return { evaluations: [] };
     }
 
     return data;
