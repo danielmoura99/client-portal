@@ -1,4 +1,4 @@
-// app/api/auth/[...nextauth]/route.ts
+//client-portal/app/api/auth/[...nextauth]/route.ts
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import NextAuth, { NextAuthOptions } from "next-auth"; // Importe NextAuthOptions

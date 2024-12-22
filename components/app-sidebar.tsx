@@ -25,13 +25,13 @@ const data = {
   navMain: [
     {
       title: "Menu de Navegacão",
-      url: "#",
+      url: "",
       icon: UserRound,
       isActive: true,
       items: [
         {
-          title: "Dashboard",
-          url: "/dashboard",
+          title: "Avaliações",
+          url: "/evaluations",
         },
         {
           title: "Perfil",
