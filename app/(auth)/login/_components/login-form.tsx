@@ -58,7 +58,16 @@ export function LoginForm() {
         return;
       }
 
-      router.push("/dashboard");
+      // Após o login bem-sucedido, verificar firstAccess
+      const userResponse = await fetch("/api/auth/me");
+      const userData = await userResponse.json();
+
+      if (userData?.firstAccess) {
+        router.push("/primeiro-acesso");
+      } else {
+        router.push("/dashboard");
+      }
+
       router.refresh();
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {

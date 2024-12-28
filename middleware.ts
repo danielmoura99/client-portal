@@ -4,17 +4,43 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
-    if (req.nextUrl.pathname === "/" && req.nextauth.token) {
+    const token = req.nextauth.token;
+
+    // Primeiro, verificar se o usuário está autenticado
+    if (!token) {
+      const loginUrl = new URL("/login", req.url);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Se for firstAccess e não estiver indo para /primeiro-acesso
+    if (
+      token.firstAccess &&
+      !req.nextUrl.pathname.startsWith("/primeiro-acesso")
+    ) {
+      return NextResponse.redirect(new URL("/primeiro-acesso", req.url));
+    }
+
+    // Se não for firstAccess e tentar acessar /primeiro-acesso
+    if (
+      !token.firstAccess &&
+      req.nextUrl.pathname.startsWith("/primeiro-acesso")
+    ) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
-    if (req.nextUrl.pathname.startsWith("/login") && req.nextauth.token) {
+
+    // Redirecionamento padrão para páginas protegidas
+    if (req.nextUrl.pathname === "/") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
+
     return NextResponse.next();
   },
   {
     pages: {
       signIn: "/login",
+    },
+    callbacks: {
+      authorized: ({ token }) => !!token,
     },
   }
 );
@@ -22,10 +48,10 @@ export default withAuth(
 export const config = {
   matcher: [
     "/",
-    "/login",
     "/dashboard/:path*",
     "/profile/:path*",
     "/evaluations/:path*",
     "/requests/:path*",
+    "/primeiro-acesso",
   ],
 };

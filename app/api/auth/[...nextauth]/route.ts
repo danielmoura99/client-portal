@@ -1,10 +1,9 @@
 //client-portal/app/api/auth/[...nextauth]/route.ts
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
-import NextAuth, { NextAuthOptions } from "next-auth"; // Importe NextAuthOptions
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-// Extraia a configuração para uma constante exportável
 export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
@@ -28,6 +27,13 @@ export const authOptions: NextAuthOptions = {
           where: {
             email: credentials.email,
           },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            firstAccess: true, // Adicionando firstAccess na seleção
+          },
         });
 
         if (!user) {
@@ -47,21 +53,30 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
+          firstAccess: user.firstAccess, // Retornando firstAccess
         };
       },
     }),
   ],
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        // Atualizar o token com os dados do usuário
+        token.id = user.id;
+        token.firstAccess = user.firstAccess;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.sub!;
+        session.user.id = token.id;
+        session.user.firstAccess = token.firstAccess;
       }
       return session;
     },
   },
 };
 
-// Use a configuração exportada para criar o handler
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
