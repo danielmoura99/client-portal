@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -18,6 +19,13 @@ import {
 } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const registrationSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
@@ -28,6 +36,7 @@ const registrationSchema = z.object({
   address: z.string().min(5, "Endereço é obrigatório"),
   zipCode: z.string().min(8, "CEP inválido").max(9),
   startDate: z.string().min(1, "Data de início é obrigatória"),
+  consistencyLock: z.boolean().default(false),
 });
 
 type RegistrationFormData = z.infer<typeof registrationSchema>;
@@ -35,12 +44,14 @@ type RegistrationFormData = z.infer<typeof registrationSchema>;
 interface RegistrationFormProps {
   paymentId: string;
   paymentData: {
+    type: "B3" | "FX"; // Novo campo
     paymentData: {
       platform: string;
       plan: string;
       customerEmail: string;
       customerName: string;
       customerDocument: string;
+      hublaPaymentId: string;
     };
   };
 }
@@ -72,6 +83,7 @@ async function checkExistingUser(email: string, document: string) {
 }
 
 export function RegistrationForm({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   paymentId,
   paymentData,
 }: RegistrationFormProps) {
@@ -127,12 +139,14 @@ export function RegistrationForm({
       setIsLoading(true);
 
       const payload = {
-        paymentId,
+        paymentId: paymentData.paymentData.hublaPaymentId,
         ...data,
+        observation: `Trava de Consistência: ${data.consistencyLock ? "Sim" : "Não"}`,
         platform,
         plan,
+        type: paymentData.type, // Adicionando o tipo
       };
-      console.log("Payload:", payload);
+      console.log("Payload completo:", payload);
 
       const apiUrl = "/api/registration/process";
       console.log("Enviando requisição para:", apiUrl);
@@ -153,6 +167,7 @@ export function RegistrationForm({
       let responseData;
       try {
         responseData = JSON.parse(responseText);
+        console.log("Resposta do processo:", responseData);
       } catch (parseError) {
         console.error("Erro ao fazer parse da resposta:", parseError);
         throw new Error("Resposta inválida do servidor");
@@ -309,6 +324,9 @@ export function RegistrationForm({
                         className="bg-zinc-800 border-zinc-700"
                       />
                     </FormControl>
+                    <FormDescription className="text-zinc-400 text-sm">
+                      Data utilizada para liberar e iniciar sua avaliação.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -343,6 +361,35 @@ export function RegistrationForm({
                         className="bg-zinc-800 border-zinc-700"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="consistencyLock"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Trava de Consistência Diária</FormLabel>
+                    <Select
+                      onValueChange={(value) =>
+                        field.onChange(value === "true")
+                      }
+                      defaultValue={field.value ? "true" : "false"}
+                    >
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                        <SelectValue placeholder="Selecione uma opção" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">Sim</SelectItem>
+                        <SelectItem value="false">Não</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription className="text-zinc-400 text-sm">
+                      Define se você deseja utilizar a trava de consistência
+                      diária
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

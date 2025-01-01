@@ -8,7 +8,15 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     console.log("[API] Dados recebidos:", data);
 
-    const adminUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL;
+    // Determinar qual URL usar baseado no tipo
+    const adminUrl =
+      data.type === "B3"
+        ? process.env.NEXT_PUBLIC_ADMIN_API_URL
+        : process.env.NEXT_PUBLIC_ADMIN_API_URL_FX;
+
+    console.log("[API fora pasta api] Usando URL:", adminUrl);
+    console.log("[API fora pasta api] Tipo:", data.type);
+
     const apiKey = process.env.API_KEY;
 
     if (!adminUrl || !apiKey) {
@@ -59,7 +67,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         ...data,
-        skipUserCreation: true, // Sinaliza para não criar usuário no trader-evaluation
+        skipUserCreation: true,
       }),
     });
 

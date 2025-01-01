@@ -1,7 +1,7 @@
 // app/(auth)/redefinir-senha/[token]/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,7 +25,41 @@ export default function ResetPasswordPage({
   params: { token: string };
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
   const router = useRouter();
+
+  // Validar token ao carregar a página
+  useEffect(() => {
+    async function validateToken() {
+      try {
+        const response = await fetch(
+          `/api/auth/validate-reset-token?token=${params.token}`
+        );
+        const data = await response.json();
+
+        if (!data.valid) {
+          toast({
+            title: "Link inválido",
+            description: "Este link expirou ou já foi utilizado.",
+            variant: "destructive",
+          });
+          router.push("/login");
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao validar link de redefinição.",
+          variant: "destructive",
+        });
+        router.push("/login");
+      } finally {
+        setIsValidating(false);
+      }
+    }
+
+    validateToken();
+  }, [params.token, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -38,7 +72,22 @@ export default function ResetPasswordPage({
         confirm: formData.get("confirm") as string,
       };
 
-      const validated = resetSchema.parse(data);
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const validated = resetSchema.parse(data);
+      } catch (zodError) {
+        // Trata os erros de validação do Zod
+        if (zodError instanceof z.ZodError) {
+          const errorMessage = zodError.errors[0].message;
+          toast({
+            title: "Erro ao redefinir senha",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
 
       const response = await fetch("/api/auth/reset-password", {
         method: "POST",
@@ -47,7 +96,7 @@ export default function ResetPasswordPage({
         },
         body: JSON.stringify({
           token: params.token,
-          password: validated.password,
+          password: data.password,
         }),
       });
 
@@ -73,6 +122,20 @@ export default function ResetPasswordPage({
       setIsLoading(false);
     }
   };
+
+  if (isValidating) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-zinc-900 border-zinc-800">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-zinc-400">Validando link...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">

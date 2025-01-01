@@ -4,7 +4,8 @@ import { RegistrationForm } from "./_components/registration-form";
 
 async function validatePayment(paymentId: string) {
   try {
-    const response = await fetch(
+    // Tentar B3 primeiro
+    let response = await fetch(
       `${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/registration/validate-payment?paymentId=${paymentId}`,
       {
         method: "GET",
@@ -16,11 +17,50 @@ async function validatePayment(paymentId: string) {
       }
     );
 
-    if (!response.ok) {
-      return null;
+    if (response.ok) {
+      const data = await response.json();
+      if (data.valid && data.paymentData?.status !== "completed") {
+        console.log("Validação B3 bem sucedida");
+        return {
+          ...data,
+          paymentData: {
+            ...data.paymentData,
+            hublaPaymentId: paymentId, // Usar o paymentId do Hubla
+          },
+          type: "B3",
+        };
+      }
     }
 
-    return response.json();
+    // Tentar FX
+    response = await fetch(
+      `${process.env.NEXT_PUBLIC_ADMIN_API_URL_FX}/api/registration/validate-payment?paymentId=${paymentId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${process.env.API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.valid && data.paymentData?.status !== "completed") {
+        console.log("Validação FX bem sucedida");
+        return {
+          ...data,
+          paymentData: {
+            ...data.paymentData,
+            hublaPaymentId: paymentId, // Usar o paymentId do Hubla
+          },
+          type: "FX",
+        };
+      }
+    }
+
+    return null;
   } catch (error) {
     console.error("Erro ao validar pagamento:", error);
     return null;
@@ -35,7 +75,7 @@ export default async function RegistrationPage({
   const paymentId = await params.paymentId;
   const validationResult = await validatePayment(paymentId);
 
-  if (!validationResult) {
+  if (!validationResult || !validationResult.paymentData?.id) {
     redirect("/pagamento-invalido");
   }
 
@@ -52,7 +92,10 @@ export default async function RegistrationPage({
         </div>
 
         <RegistrationForm
-          paymentId={validationResult.paymentData.id}
+          paymentId={
+            validationResult.paymentData.hublaPaymentId ||
+            validationResult.paymentData.id
+          }
           paymentData={validationResult}
         />
       </div>

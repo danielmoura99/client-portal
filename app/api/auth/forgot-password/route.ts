@@ -2,20 +2,24 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 import crypto from "crypto";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendPasswordResetEmail, verifyEmailConfig } from "@/lib/email-service";
 
 export async function POST(req: NextRequest) {
   try {
+    const isEmailConfigValid = await verifyEmailConfig();
+    if (!isEmailConfigValid) {
+      return Response.json(
+        { error: "Erro na configuração de email" },
+        { status: 500 }
+      );
+    }
+
     const { email } = await req.json();
 
-    // Buscar usuário
     const user = await prisma.user.findUnique({
       where: { email },
     });
 
-    // Por segurança, retornamos a mesma mensagem mesmo se o usuário não existir
     if (!user) {
       return Response.json({
         message:
@@ -23,11 +27,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Gerar token e data de expiração
     const resetToken = crypto.randomBytes(32).toString("hex");
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hora
 
-    // Atualizar usuário com o token
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -36,25 +38,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Enviar email
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha/${resetToken}`;
+    const resetUrl = `${process.env.NEXTAUTH_URL}/redefinir-senha/${resetToken}`;
 
-    await resend.emails.send({
-      from: "noreply@seudominio.com",
+    await sendPasswordResetEmail({
       to: user.email,
-      subject: "Recuperação de Senha",
-      html: `
-        <div style="font-family: sans-serif; color: #333;">
-          <h2>Recuperação de Senha</h2>
-          <p>Você solicitou a recuperação de senha da sua conta.</p>
-          <p>Clique no link abaixo para redefinir sua senha:</p>
-          <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
-            Redefinir Senha
-          </a>
-          <p>Este link é válido por 1 hora.</p>
-          <p>Se você não solicitou esta recuperação, ignore este email.</p>
-        </div>
-      `,
+      userName: user.name,
+      resetUrl,
     });
 
     return Response.json({

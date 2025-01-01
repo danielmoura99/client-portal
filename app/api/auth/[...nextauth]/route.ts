@@ -7,9 +7,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
+    signOut: "/login", // Adicionando página de signOut
+    error: "/login", // Adicionando página de erro
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 dias
   },
   providers: [
     CredentialsProvider({
@@ -59,20 +62,41 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
-        // Atualizar o token com os dados do usuário
         token.id = user.id;
         token.firstAccess = user.firstAccess;
       }
+
+      // Permite atualização do token quando a sessão é atualizada
+      if (trigger === "update" && session) {
+        token.firstAccess = session.user.firstAccess;
+      }
+
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
+      // Garantir que session.user existe antes de tentar atribuir propriedades
+      session.user = session.user || {};
+
+      if (token) {
         session.user.id = token.id;
         session.user.firstAccess = token.firstAccess;
       }
+
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Se a URL começar com o baseUrl, permite o redirecionamento
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // Se for uma URL relativa, adiciona o baseUrl
+      else if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Caso contrário, redireciona para o baseUrl
+      return baseUrl;
     },
   },
 };
