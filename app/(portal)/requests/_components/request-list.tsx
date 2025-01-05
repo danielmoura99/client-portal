@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RequestStatus } from "@prisma/client";
+import { RequestStatus } from "@/types";
 
 const statusOptions = [
   { value: "ALL", label: "Todos os Status" },

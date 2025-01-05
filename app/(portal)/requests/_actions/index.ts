@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { revalidatePath } from "next/cache";
-import { RequestStatus } from "@prisma/client";
+import { RequestStatus } from "@/types";
 
 interface CreateRequestData {
   type: string;
