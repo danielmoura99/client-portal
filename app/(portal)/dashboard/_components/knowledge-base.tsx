@@ -1,4 +1,4 @@
-// app/(portal)/dashboard/_components/knowledge-base.tsx
+/// app/(portal)/dashboard/_components/knowledge-base.tsx
 import Link from "next/link";
 import { BookOpen, HelpCircle, Video } from "lucide-react";
 
