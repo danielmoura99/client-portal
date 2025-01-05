@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSession } from "next-auth/react";
 import { addResponse, updateRequestStatus } from "../_actions";
 import { toast } from "@/hooks/use-toast";
-import { RequestStatus } from "@prisma/client";
+import { RequestStatus } from "@/types";
 
 const requestTypeMap = {
   EVALUATION_APPROVAL: "Aprovação de Avaliação",
