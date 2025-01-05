@@ -39,7 +39,7 @@ export async function getRequests(status?: RequestStatus | "") {
     throw new Error("Unauthorized");
   }
 
-  const whereClause = status ? { status: status as RequestStatus } : {};
+  const whereClause = status ? { status } : {};
 
   // Se for admin, retorna todas as solicitações
   if (session.user.role === "ADMIN") {
@@ -106,7 +106,10 @@ export async function addResponse(requestId: string, message: string) {
   return response;
 }
 
-export async function updateRequestStatus(requestId: string, status: string) {
+export async function updateRequestStatus(
+  requestId: string,
+  status: RequestStatus
+) {
   const session = await getServerSession(authOptions);
 
   if (
@@ -118,8 +121,7 @@ export async function updateRequestStatus(requestId: string, status: string) {
 
   const request = await prisma.request.update({
     where: { id: requestId },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: { status: status as any },
+    data: { status },
   });
 
   revalidatePath("/requests");
