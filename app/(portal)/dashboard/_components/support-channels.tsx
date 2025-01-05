@@ -16,7 +16,7 @@ export default function SupportChannels() {
           className="flex items-center gap-3 text-zinc-400 hover:text-zinc-100 transition-colors"
         >
           <Instagram className="w-5 h-5" />
-          @tradershouse
+          @escolatradershouse
         </a>
         <a
           href="https://api.whatsapp.com/send?phone=5562993776216"

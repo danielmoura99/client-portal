@@ -11,7 +11,7 @@ export default function KnowledgeBase() {
 
       <div className="space-y-3">
         <Link
-          href="/knowledge/rules"
+          href="https://tradershouse.com.br/mesaproprietaria"
           className="flex items-center gap-3 text-zinc-400 hover:text-zinc-100 transition-colors"
         >
           <BookOpen className="w-5 h-5" />
@@ -19,7 +19,7 @@ export default function KnowledgeBase() {
         </Link>
 
         <Link
-          href="/knowledge/faq"
+          href=""
           className="flex items-center gap-3 text-zinc-400 hover:text-zinc-100 transition-colors"
         >
           <HelpCircle className="w-5 h-5" />
@@ -27,7 +27,7 @@ export default function KnowledgeBase() {
         </Link>
 
         <Link
-          href="/knowledge/tutorials"
+          href=""
           className="flex items-center gap-3 text-zinc-400 hover:text-zinc-100 transition-colors"
         >
           <Video className="w-5 h-5" />
