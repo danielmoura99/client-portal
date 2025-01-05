@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, Copy, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { toast } from "@/hooks/use-toast";
 
-export default function RegistroSucessoPage() {
+function RegistroSucessoContent() {
   const [copied, setCopied] = useState(false);
   const searchParams = useSearchParams();
   const isNewUser = searchParams.get("new") === "true";
@@ -88,5 +88,19 @@ export default function RegistroSucessoPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function RegistroSucessoPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+          <p className="text-zinc-400">Carregando...</p>
+        </div>
+      }
+    >
+      <RegistroSucessoContent />
+    </Suspense>
   );
 }

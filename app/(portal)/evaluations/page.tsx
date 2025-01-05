@@ -16,8 +16,13 @@ export default async function EvaluationsPage() {
       </div>
 
       {evaluations.length === 0 ? (
-        <div className="flex items-center justify-center h-[200px] bg-zinc-900/50 border border-zinc-800 rounded-lg">
-          <p className="text-zinc-400">Nenhuma avaliação encontrada</p>
+        <div className="flex flex-col items-center justify-center h-[200px] bg-zinc-900/50 border border-zinc-800 rounded-lg">
+          <p className="text-zinc-400">
+            {data?.message || "Nenhuma avaliação encontrada"}
+          </p>
+          <p className="text-sm text-zinc-500 mt-2">
+            Assim que você iniciar uma avaliação, ela aparecerá aqui.
+          </p>
         </div>
       ) : (
         <EvaluationsTable evaluations={evaluations} />

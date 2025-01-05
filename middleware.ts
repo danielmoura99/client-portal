@@ -28,6 +28,12 @@ export default withAuth(
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
+    // Verificação de roles para áreas administrativas
+    const isAdmin = token.role === "ADMIN" || token.role === "SUPPORT";
+    if (req.nextUrl.pathname.startsWith("/admin") && !isAdmin) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
     // Redirecionamento padrão para páginas protegidas
     if (req.nextUrl.pathname === "/") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
@@ -53,5 +59,6 @@ export const config = {
     "/evaluations/:path*",
     "/requests/:path*",
     "/primeiro-acesso",
+    "/admin/:path*", // Adicionado para proteger rotas administrativas
   ],
 };

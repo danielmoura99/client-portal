@@ -30,6 +30,10 @@ const data = {
       isActive: true,
       items: [
         {
+          title: "Dashboard",
+          url: "/dashboard",
+        },
+        {
           title: "Avaliações",
           url: "/evaluations",
         },
@@ -39,7 +43,7 @@ const data = {
         },
         {
           title: "Solicitações",
-          url: "/request",
+          url: "/requests",
         },
       ],
     },
@@ -53,7 +57,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="">
+              <a href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <ChevronUp className="size-14" />
                 </div>

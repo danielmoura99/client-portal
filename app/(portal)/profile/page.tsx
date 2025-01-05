@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { getUserProfile } from "./_actions";
 import { ProfileForm } from "./_components/profile-form";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // Importar authOptions
+import { authOptions } from "@/app/api/auth/[...nextauth]/options"; // Importar authOptions
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions); // Passar authOptions aqui

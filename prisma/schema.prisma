@@ -8,6 +8,27 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum UserRole {
+  USER
+  ADMIN
+  SUPPORT
+}
+
+enum RequestStatus {
+  PENDING
+  IN_ANALYSIS
+  COMPLETED
+}
+
+enum RequestType {
+  EVALUATION_APPROVAL
+  START_DATE_CHANGE
+  WITHDRAWAL
+  PLATFORM_ISSUE
+  GENERAL
+}
+
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -20,6 +41,7 @@ model User {
   firstAccess   Boolean   @default(true)
   resetToken       String?
   resetTokenExpiry DateTime?
+  role          UserRole  @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   evaluations   Evaluation[]
@@ -40,12 +62,22 @@ model Evaluation {
 }
 
 model Request {
-  id          String    @id @default(cuid())
+  id          String      @id @default(cuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  type        String    // Tipo de solicitação
-  status      String    // Status da solicitação
-  description String
+  user        User        @relation(fields: [userId], references: [id])
+  type        RequestType
+  status      RequestStatus @default(PENDING)
+  description String       @db.Text
+  responses   RequestResponse[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model RequestResponse {
+  id          String    @id @default(cuid())
+  requestId   String
+  request     Request   @relation(fields: [requestId], references: [id])
+  message     String    @db.Text
+  isFromAdmin Boolean   @default(false)
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 }

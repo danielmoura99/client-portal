@@ -1,3 +1,5 @@
+import { Evaluation } from "@prisma/client";
+
 // types/index.ts
 export interface User {
   id: string;

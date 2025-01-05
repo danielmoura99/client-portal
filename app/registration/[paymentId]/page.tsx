@@ -2,6 +2,11 @@
 import { redirect } from "next/navigation";
 import { RegistrationForm } from "./_components/registration-form";
 
+interface PageProps {
+  params: Promise<{ paymentId: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
 async function validatePayment(paymentId: string) {
   try {
     // Tentar B3 primeiro
@@ -25,7 +30,7 @@ async function validatePayment(paymentId: string) {
           ...data,
           paymentData: {
             ...data.paymentData,
-            hublaPaymentId: paymentId, // Usar o paymentId do Hubla
+            hublaPaymentId: paymentId,
           },
           type: "B3",
         };
@@ -53,7 +58,7 @@ async function validatePayment(paymentId: string) {
           ...data,
           paymentData: {
             ...data.paymentData,
-            hublaPaymentId: paymentId, // Usar o paymentId do Hubla
+            hublaPaymentId: paymentId,
           },
           type: "FX",
         };
@@ -69,11 +74,11 @@ async function validatePayment(paymentId: string) {
 
 export default async function RegistrationPage({
   params,
-}: {
-  params: { paymentId: Promise<string> };
-}) {
-  const paymentId = await params.paymentId;
-  const validationResult = await validatePayment(paymentId);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  searchParams,
+}: PageProps) {
+  const resolvedParams = await params;
+  const validationResult = await validatePayment(resolvedParams.paymentId);
 
   if (!validationResult || !validationResult.paymentData?.id) {
     redirect("/pagamento-invalido");

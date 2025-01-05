@@ -2,7 +2,7 @@
 import "@/app/globals.css";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // Importar authOptions
+import { authOptions } from "@/app/api/auth/[...nextauth]/options"; // Importar authOptions
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Separator } from "@/components/ui/separator";

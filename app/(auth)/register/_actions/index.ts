@@ -8,6 +8,7 @@ export async function registerUser(data: {
   name: string;
   email: string;
   password: string;
+  document: string; // Adicionando campo obrigatório
 }) {
   const existingUser = await prisma.user.findUnique({
     where: { email: data.email },
@@ -24,6 +25,7 @@ export async function registerUser(data: {
       name: data.name,
       email: data.email,
       password: hashedPassword,
+      document: data.document,
     },
   });
 }

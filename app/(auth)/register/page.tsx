@@ -16,7 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
 import { registerUser } from "./_actions";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +24,7 @@ const registerSchema = z
   .object({
     name: z.string().min(1, "Nome é obrigatório"),
     email: z.string().email("Email inválido"),
+    document: z.string().min(1, "Documento é obrigatório"),
     password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
     confirmPassword: z.string(),
   })
@@ -45,6 +45,7 @@ export default function RegisterPage() {
     defaultValues: {
       name: "",
       email: "",
+      document: "",
       password: "",
       confirmPassword: "",
     },
@@ -56,6 +57,7 @@ export default function RegisterPage() {
       await registerUser({
         name: data.name,
         email: data.email,
+        document: data.document,
         password: data.password,
       });
 
@@ -119,6 +121,24 @@ export default function RegisterPage() {
                       type="email"
                       disabled={loading}
                       placeholder="seu@email.com"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="document"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Documento</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      disabled={loading}
+                      placeholder="Seu documento"
                     />
                   </FormControl>
                   <FormMessage />

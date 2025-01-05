@@ -3,13 +3,25 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import StatusCard from "./_components/status-card";
+import ActionButtons from "./_components/action-buttons";
+import SupportChannels from "./_components/support-channels";
+import KnowledgeBase from "./_components/knowledge-base";
+
+interface Evaluation {
+  id: string;
+  type: "B3" | "FX";
+  plan: string;
+  traderStatus: string;
+  startDate?: Date;
+  endDate?: Date;
+}
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
 
   useEffect(() => {
     console.log("Dashboard - Session Status:", status);
@@ -19,6 +31,27 @@ export default function DashboardPage() {
       router.push("/login");
     }
   }, [session, status, router]);
+
+  useEffect(() => {
+    async function loadEvaluations() {
+      if (session?.user) {
+        try {
+          const response = await fetch("/api/evaluations/user");
+          if (!response.ok) {
+            throw new Error("Erro ao carregar avaliações");
+          }
+          const data = await response.json();
+          setEvaluations(data.evaluations || []);
+        } catch (error) {
+          console.error("Erro ao carregar avaliações:", error);
+        }
+      }
+    }
+
+    if (session?.user) {
+      loadEvaluations();
+    }
+  }, [session]);
 
   if (status === "loading") {
     return (
@@ -31,8 +64,8 @@ export default function DashboardPage() {
   if (!session) return null;
 
   return (
-    <div className="space-y-8">
-      <div>
+    <div className="p-6 space-y-8">
+      <div className="flex flex-col gap-2">
         <h2 className="text-2xl font-bold text-zinc-100">
           Bem-vindo(a), {session.user?.name}
         </h2>
@@ -41,38 +74,20 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-zinc-100">Avaliações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-zinc-400">
-              Visualize e acompanhe suas avaliações em andamento.
-            </p>
-          </CardContent>
-        </Card>
+      {/* Status das Avaliações */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {evaluations.map((evaluation) => (
+          <StatusCard key={evaluation.id} evaluation={evaluation} />
+        ))}
+      </div>
 
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-zinc-100">Solicitações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-zinc-400">
-              Faça novas solicitações ou acompanhe as existentes.
-            </p>
-          </CardContent>
-        </Card>
+      {/* Ações Rápidas */}
+      <ActionButtons />
 
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-zinc-100">Perfil</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-zinc-400">Atualize suas informações pessoais.</p>
-            <Button>teste</Button>
-          </CardContent>
-        </Card>
+      {/* Suporte e Base de Conhecimento */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <SupportChannels />
+        <KnowledgeBase />
       </div>
     </div>
   );
