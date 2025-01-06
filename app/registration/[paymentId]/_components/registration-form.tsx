@@ -214,189 +214,234 @@ export function RegistrationForm({
   }
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardContent className="pt-6">
+    <Card className="w-full max-w-2xl mx-auto bg-zinc-900 border-zinc-800">
+      <CardContent className="p-4 sm:p-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome Completo</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="bg-zinc-800 border-zinc-700"
-                        disabled={isExistingUser}
-                        readOnly={isExistingUser}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="flex flex-col space-y-4">
+              {/* Seção de Informações Pessoais */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Informações Pessoais</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel className="text-sm font-medium">
+                          Nome Completo
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="w-full p-2 bg-zinc-800 border-zinc-700 rounded-md"
+                            disabled={isExistingUser}
+                            readOnly={isExistingUser}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs text-red-500" />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="bg-zinc-800 border-zinc-700"
-                        disabled={isExistingUser}
-                        readOnly={isExistingUser}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel className="text-sm font-medium">
+                          E-mail
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="w-full p-2 bg-zinc-800 border-zinc-700 rounded-md"
+                            disabled={isExistingUser}
+                            readOnly={isExistingUser}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs text-zinc-400">
+                          E-mail utilizado para liberar a plataforma Nelogica.
+                        </FormDescription>
+                        <FormMessage className="text-xs text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              <FormField
-                control={form.control}
-                name="cpf"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CPF</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="bg-zinc-800 border-zinc-700"
-                        disabled={isExistingUser}
-                        readOnly={isExistingUser}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="cpf"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">
+                          CPF
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="w-full p-2 bg-zinc-800 border-zinc-700 rounded-md"
+                            disabled={isExistingUser}
+                            readOnly={isExistingUser}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs text-red-500" />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="bg-zinc-800 border-zinc-700"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">
+                          Telefone
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="w-full p-2 bg-zinc-800 border-zinc-700 rounded-md"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-              <FormField
-                control={form.control}
-                name="birthDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de Nascimento</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        className="bg-zinc-800 border-zinc-700"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Seção de Datas */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Datas</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="birthDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">
+                          Data de Nascimento
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            className="w-full p-2 bg-zinc-800 border-zinc-700 rounded-md"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs text-red-500" />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de Início</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        className="bg-zinc-800 border-zinc-700"
-                      />
-                    </FormControl>
-                    <FormDescription className="text-zinc-400 text-sm">
-                      Data utilizada para liberar e iniciar sua avaliação.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">
+                          Data de Início
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            className="w-full p-2 bg-zinc-800 border-zinc-700 rounded-md"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs text-zinc-400">
+                          Data utilizada para liberar e iniciar sua avaliação.
+                        </FormDescription>
+                        <FormMessage className="text-xs text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Endereço</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="bg-zinc-800 border-zinc-700"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Seção de Endereço */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Endereço</h3>
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        Endereço Completo
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="w-full p-2 bg-zinc-800 border-zinc-700 rounded-md"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="zipCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CEP</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="bg-zinc-800 border-zinc-700"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="zipCode"
+                  render={({ field }) => (
+                    <FormItem className="max-w-xs">
+                      <FormLabel className="text-sm font-medium">CEP</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="w-full p-2 bg-zinc-800 border-zinc-700 rounded-md"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <FormField
-                control={form.control}
-                name="consistencyLock"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Trava de Consistência Diária</FormLabel>
-                    <Select
-                      onValueChange={(value) =>
-                        field.onChange(value === "true")
-                      }
-                      defaultValue={field.value ? "true" : "false"}
-                    >
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700">
-                        <SelectValue placeholder="Selecione uma opção" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">Sim</SelectItem>
-                        <SelectItem value="false">Não</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription className="text-zinc-400 text-sm">
-                      Define se você deseja utilizar a trava de consistência
-                      diária
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Seção de Configurações */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Configurações</h3>
+                <FormField
+                  control={form.control}
+                  name="consistencyLock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        Trava de Consistência Diária
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) =>
+                          field.onChange(value === "true")
+                        }
+                        defaultValue={field.value ? "true" : "false"}
+                      >
+                        <SelectTrigger className="w-full p-2 bg-zinc-800 border-zinc-700 rounded-md">
+                          <SelectValue placeholder="Selecione uma opção" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Sim</SelectItem>
+                          <SelectItem value="false">Não</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription className="text-xs text-zinc-400">
+                        Define se você deseja utilizar a trava de consistência
+                        diária
+                      </FormDescription>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
