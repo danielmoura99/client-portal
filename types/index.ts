@@ -24,3 +24,12 @@ export const REQUEST_STATUS = {
   IN_ANALYSIS: "IN_ANALYSIS",
   COMPLETED: "COMPLETED",
 } as const;
+
+export interface VideoType {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  duration: number;
+  category: string;
+}
