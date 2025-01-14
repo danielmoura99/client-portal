@@ -11,6 +11,9 @@ export interface PandaVideo {
   description?: string;
   thumbnail?: string;
   created_at: string;
+  embed_id?: string | null;
+  player_url?: string | null;
+  pullzone_name?: string | null;
 }
 
 export interface PandaFolder {
@@ -18,4 +21,10 @@ export interface PandaFolder {
   name: string;
   parent_id?: string;
   created_at: string;
+}
+
+export interface VideoEmbedData {
+  embedId: string | null;
+  playerUrl: string | null;
+  pullzoneName: string | null;
 }

@@ -1,15 +1,47 @@
 // app/(portal)/educational/_actions/video-actions.ts
 "use client";
 
-import { PandaVideo } from "@/types/panda";
+import { PandaVideo, VideoEmbedData } from "@/types/panda";
 
-const TRADERS_HOUSE_FOLDER_ID = "d7ae82f8-6cfe-47d4-b131-1137d3c94a18";
+const TRADERS_HOUSE_FOLDER_ID = "8d01f885-23e4-4f85-baae-5ef395a2a517";
 
-// Função auxiliar para extrair o número do título
 function getVideoNumber(title: string): number {
-  // Procura por um número no início do título
   const match = title.match(/^(?:Aula\s*)?(\d+)/i);
-  return match ? parseInt(match[1]) : 9999; // Se não encontrar número, coloca no final
+  return match ? parseInt(match[1]) : 9999;
+}
+
+export async function getVideoEmbed(videoId: string): Promise<VideoEmbedData> {
+  try {
+    const response = await fetch(
+      `https://api-v2.pandavideo.com.br/videos/${videoId}`,
+      {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+          Authorization: process.env.NEXT_PUBLIC_PANDA_API_KEY!,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar detalhes do vídeo: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      embedId: data.video_external_id || null,
+      playerUrl: data.video_player || null,
+      pullzoneName: data.pullzone_name || null,
+    };
+  } catch (error) {
+    console.error("Erro ao buscar embed do vídeo:", error);
+    return {
+      embedId: null,
+      playerUrl: null,
+      pullzoneName: null,
+    };
+  }
 }
 
 export async function getFolderVideos(): Promise<PandaVideo[]> {
@@ -19,7 +51,6 @@ export async function getFolderVideos(): Promise<PandaVideo[]> {
   }
 
   try {
-    // Busca direta dos vídeos usando o ID da pasta
     const response = await fetch(
       `https://api-v2.pandavideo.com.br/videos?folder_id=${TRADERS_HOUSE_FOLDER_ID}`,
       {
@@ -32,19 +63,26 @@ export async function getFolderVideos(): Promise<PandaVideo[]> {
     );
 
     if (!response.ok) {
-      console.error("Detalhes da resposta:", {
-        status: response.status,
-        statusText: response.statusText,
-      });
       throw new Error(`Erro ao buscar vídeos: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log("Dados recebidos:", data);
     const videos = data.videos || [];
 
-    // Ordena os vídeos por número extraído do título
-    return videos.sort((a: PandaVideo, b: PandaVideo) => {
+    // Busca o embed_id para cada vídeo
+    const videosWithEmbed = await Promise.all(
+      videos.map(async (video: PandaVideo) => {
+        const videoData = await getVideoEmbed(video.id);
+        return {
+          ...video,
+          embed_id: videoData.embedId,
+          player_url: videoData.playerUrl,
+          pullzone_name: videoData.pullzoneName,
+        };
+      })
+    );
+
+    return videosWithEmbed.sort((a, b) => {
       const numA = getVideoNumber(a.title);
       const numB = getVideoNumber(b.title);
       return numA - numB;
