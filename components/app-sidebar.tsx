@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronUp, UserRound } from "lucide-react";
+import { BookOpen, ChevronUp, UserRound } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -44,6 +44,18 @@ const data = {
         {
           title: "Solicitações",
           url: "/requests",
+        },
+      ],
+    },
+    {
+      title: "Educacional",
+      url: "",
+      icon: BookOpen,
+      isActive: true,
+      items: [
+        {
+          title: "Tutoriais",
+          url: "/educational",
         },
       ],
     },

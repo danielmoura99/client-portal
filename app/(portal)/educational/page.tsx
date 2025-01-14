@@ -27,9 +27,12 @@ export default function EducationalPage() {
   const selectedVideo = videos.find((v) => v.id === selectedVideoId);
 
   return (
-    <div className="flex flex-col space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Área Educacional</h2>
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold text-zinc-100">Educacional</h1>
+        <p className="text-zinc-400">
+          Aqui você tem acesso a vídeos educacionais.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
