@@ -1,9 +1,6 @@
 # Portal do Cliente
 
 <div align="center">
-  <p align="center">
-    <strong>Portal de clientes</strong>
-  </p>
   <p>
     <img src="https://img.shields.io/badge/Next.js-15.1.0-black?style=flat-square&logo=next.js" alt="Next.js">
     <img src="https://img.shields.io/badge/React-18.2.0-61DAFB?style=flat-square&logo=react" alt="React">
@@ -11,11 +8,13 @@
     <img src="https://img.shields.io/badge/TypeScript-5+-3178C6?style=flat-square&logo=typescript" alt="TypeScript">
     <img src="https://img.shields.io/badge/Tailwind-3.4.1-38B2AC?style=flat-square&logo=tailwind-css" alt="Tailwind CSS">
   </p>
+  
+  <img src="./docs/screenshots/dashboard/main-view.png" alt="Dashboard do Portal" width="90%" />
 </div>
 
 ## 📋 Sobre o Projeto
 
-O **Portal do Cliente** é uma aplicação web completa para interface com clientes. Desenvolvido com tecnologias modernas, o sistema permite que traders acompanhem suas avaliações, visualizem métricas de desempenho, acessem conteúdo educacional e interajam diretamente com a equipe de suporte.
+O **Portal do Cliente** é uma aplicação web completa para interface entre empresa e cliente. Desenvolvido com tecnologias modernas, o sistema permite que traders acompanhem suas avaliações, visualizem métricas de desempenho, acessem conteúdo educacional e interajam diretamente com a equipe de suporte.
 
 ### ✨ Recursos Principais
 
@@ -56,8 +55,6 @@ O projeto foi construído com as seguintes tecnologias:
 
 ## 🏗️ Arquitetura
 
-O projeto segue uma arquitetura moderna baseada em:
-
 - **App Router do Next.js**: Para roteamento e rendering
 - **Server Components**: Para otimização de performance
 - **Server Actions**: Para funções do lado do servidor
@@ -71,31 +68,27 @@ O projeto segue uma arquitetura moderna baseada em:
 <div align="center">
   <table>
     <tr>
-      <td align="center">
+      <td align="center" width="33%">
+        <img src="./docs/screenshots/auth/login.png" alt="Tela de Login" width="100%" /><br/>
         <strong>Login Seguro</strong><br/>
         Sistema completo de autenticação
       </td>
-      <td align="center">
+      <td align="center" width="33%">
+        <img src="./docs/screenshots/dashboard/main-view.png" alt="Dashboard" width="100%" /><br/>
         <strong>Dashboard</strong><br/>
         Visão geral das avaliações e progresso
       </td>
-      <td align="center">
-        <strong>Gerenciamento de Avaliações</strong><br/>
-        Acompanhamento detalhado das métricas
-      </td>
     </tr>
     <tr>
-      <td align="center">
+      <td align="center" width="33%">
+        <img src="./docs/screenshots/features/requests.png" alt="Central de Suporte" width="100%" /><br/>
         <strong>Central de Suporte</strong><br/>
         Sistema de solicitações e comunicação
       </td>
-      <td align="center">
+      <td align="center" width="33%">
+        <img src="./docs/screenshots/features/educacional.png" alt="Área Educacional" width="100%" /><br/>
         <strong>Área Educacional</strong><br/>
         Acesso a vídeos e conteúdos
-      </td>
-      <td align="center">
-        <strong>Perfil do Usuário</strong><br/>
-        Gerenciamento de dados pessoais
       </td>
     </tr>
   </table>
@@ -114,8 +107,8 @@ O projeto segue uma arquitetura moderna baseada em:
 Clone o repositório:
 
 ```bash
-git clone https://github.com/seu-usuario/
-cd traders-house-portal
+git clone https://github.com/seu-usuario
+cd clien-portal
 ```
 
 Instale as dependências:
@@ -168,13 +161,9 @@ npm run test
 yarn test
 ```
 
-## 📝 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
 ## 👨‍💻 Autor
 
-Desenvolvido por Daniel Moura(https://github.com/danielmoura99).
+Desenvolvido por Daniel Moura (https://github.com/danielmoura99).
 
 ---
 
