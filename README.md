@@ -1,7 +1,6 @@
 # Portal do Cliente
 
 <div align="center">
-  <img src="./public/logo.png" alt="Traders House Logo" width="300px"/>
   <p align="center">
     <strong>Portal de clientes</strong>
   </p>
@@ -16,7 +15,7 @@
 
 ## 📋 Sobre o Projeto
 
-O **Portal do Cliente** é uma aplicação web completa para gerenciamento de avaliações de traders. Desenvolvido com tecnologias modernas, o sistema permite que traders acompanhem suas avaliações, visualizem métricas de desempenho, acessem conteúdo educacional e interajam diretamente com a equipe de suporte.
+O **Portal do Cliente** é uma aplicação web completa para interface com clientes. Desenvolvido com tecnologias modernas, o sistema permite que traders acompanhem suas avaliações, visualizem métricas de desempenho, acessem conteúdo educacional e interajam diretamente com a equipe de suporte.
 
 ### ✨ Recursos Principais
 
