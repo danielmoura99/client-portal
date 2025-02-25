@@ -8,8 +8,6 @@
     <img src="https://img.shields.io/badge/TypeScript-5+-3178C6?style=flat-square&logo=typescript" alt="TypeScript">
     <img src="https://img.shields.io/badge/Tailwind-3.4.1-38B2AC?style=flat-square&logo=tailwind-css" alt="Tailwind CSS">
   </p>
-  
-  <img src="./docs/screenshots/dashboard/main-view.png" alt="Dashboard do Portal" width="90%" />
 </div>
 
 ## 📋 Sobre o Projeto
@@ -108,7 +106,7 @@ Clone o repositório:
 
 ```bash
 git clone https://github.com/seu-usuario
-cd clien-portal
+cd client-portal
 ```
 
 Instale as dependências:
