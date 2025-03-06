@@ -1,4 +1,4 @@
-# Portal do Cliente
+# Client Portal
 
 <div align="center">
   <p>
@@ -10,23 +10,23 @@
   </p>
 </div>
 
-## 📋 Sobre o Projeto
+## 📋 About the Project
 
-O **Portal do Cliente** é uma aplicação web completa para interface entre empresa e cliente. Desenvolvido com tecnologias modernas, o sistema permite que traders acompanhem suas avaliações, visualizem métricas de desempenho, acessem conteúdo educacional e interajam diretamente com a equipe de suporte.
+The **Client Portal** is a complete web application for the interface between company and client. Developed with modern technologies, the system allows traders to track their evaluations, view performance metrics, access educational content, and interact directly with the support team.
 
-### ✨ Recursos Principais
+### ✨ Main Features
 
-- **Autenticação Segura**: Sistema completo com login, registro, recuperação de senha e gestão de sessões
-- **Dashboard Personalizado**: Visão geral das avaliações em andamento e seu progresso
-- **Gestão de Avaliações**: Acompanhamento detalhado de cada avaliação de trading
-- **Sistema de Solicitações**: Canal direto de comunicação com a equipe de suporte
-- **Conteúdo Educacional**: Acesso a vídeos e materiais de treinamento
-- **Área de Perfil**: Gerenciamento de informações pessoais
-- **Design Responsivo**: Interface adaptada para todos os dispositivos
+- **Secure Authentication**: Complete system with login, registration, password recovery, and session management
+- **Personalized Dashboard**: Overview of ongoing evaluations and their progress
+- **Evaluation Management**: Detailed tracking of each trading evaluation
+- **Request System**: Direct communication channel with the support team
+- **Educational Content**: Access to videos and training materials
+- **Profile Area**: Management of personal information
+- **Responsive Design**: Interface adapted for all devices
 
-## 🖥️ Tecnologias
+## 🖥️ Technologies
 
-O projeto foi construído com as seguintes tecnologias:
+The project was built with the following technologies:
 
 - **Frontend**:
 
@@ -34,8 +34,8 @@ O projeto foi construído com as seguintes tecnologias:
   - React 18
   - TypeScript
   - Tailwind CSS
-  - shadcn/ui (componentes)
-  - Lucide React (ícones)
+  - shadcn/ui (components)
+  - Lucide React (icons)
 
 - **Backend**:
 
@@ -43,128 +43,128 @@ O projeto foi construído com as seguintes tecnologias:
   - NextAuth.js
   - Node.js
   - PostgreSQL
-  - API Rest
+  - REST API
 
-- **Outros**:
+- **Others**:
   - React Hook Form
-  - Zod (validação)
+  - Zod (validation)
   - React Email
   - Nodemailer
 
-## 🏗️ Arquitetura
+## 🏗️ Architecture
 
-- **App Router do Next.js**: Para roteamento e rendering
-- **Server Components**: Para otimização de performance
-- **Server Actions**: Para funções do lado do servidor
-- **Autenticação JWT**: Para gerenciamento de sessões
-- **API Routes**: Para endpoints backend
-- **ORM com Prisma**: Para interação com banco de dados
-- **Middleware**: Para proteção de rotas e regras de negócio
+- **Next.js App Router**: For routing and rendering
+- **Server Components**: For performance optimization
+- **Server Actions**: For server-side functions
+- **JWT Authentication**: For session management
+- **API Routes**: For backend endpoints
+- **ORM with Prisma**: For database interaction
+- **Middleware**: For route protection and business rules
 
-## 📱 Recursos da Interface
+## 📱 Interface Resources
 
 <div align="center">
   <table>
     <tr>
       <td align="center" width="33%">
-        <img src="./docs/screenshots/auth/login.png" alt="Tela de Login" width="100%" /><br/>
-        <strong>Login Seguro</strong><br/>
-        Sistema completo de autenticação
+        <img src="./docs/screenshots/auth/login.png" alt="Login Screen" width="100%" /><br/>
+        <strong>Secure Login</strong><br/>
+        Complete authentication system
       </td>
       <td align="center" width="33%">
         <img src="./docs/screenshots/dashboard/main-view.png" alt="Dashboard" width="100%" /><br/>
         <strong>Dashboard</strong><br/>
-        Visão geral das avaliações e progresso
+        Overview of evaluations and progress
       </td>
     </tr>
     <tr>
       <td align="center" width="33%">
-        <img src="./docs/screenshots/features/requests.png" alt="Central de Suporte" width="100%" /><br/>
-        <strong>Central de Suporte</strong><br/>
-        Sistema de solicitações e comunicação
+        <img src="./docs/screenshots/features/requests.png" alt="Support Center" width="100%" /><br/>
+        <strong>Support Center</strong><br/>
+        Request and communication system
       </td>
       <td align="center" width="33%">
-        <img src="./docs/screenshots/features/educacional.png" alt="Área Educacional" width="100%" /><br/>
-        <strong>Área Educacional</strong><br/>
-        Acesso a vídeos e conteúdos
+        <img src="./docs/screenshots/features/educacional.png" alt="Educational Area" width="100%" /><br/>
+        <strong>Educational Area</strong><br/>
+        Access to videos and content
       </td>
     </tr>
   </table>
 </div>
 
-## 🚀 Instalação e Uso
+## 🚀 Installation and Usage
 
-### Pré-requisitos
+### Prerequisites
 
 - Node.js 18+
 - PostgreSQL
-- Yarn ou NPM
+- Yarn or NPM
 
-### Configuração do Ambiente
+### Environment Setup
 
-Clone o repositório:
+Clone the repository:
 
 ```bash
-git clone https://github.com/seu-usuario
+git clone https://github.com/your-username
 cd client-portal
 ```
 
-Instale as dependências:
+Install dependencies:
 
 ```bash
 npm install
-# ou
+# or
 yarn
 ```
 
-Configure as variáveis de ambiente:
+Configure environment variables:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Edite o arquivo `.env.local` com suas configurações.
+Edit the `.env.local` file with your settings.
 
-### Inicialização do Banco de Dados
+### Database Initialization
 
 ```bash
 npx prisma migrate dev
 ```
 
-### Execução do Projeto
+### Running the Project
 
 ```bash
 npm run dev
-# ou
+# or
 yarn dev
 ```
 
-Acesse o projeto em [http://localhost:3000](http://localhost:3000)
+Access the project at [http://localhost:3000](http://localhost:3000)
 
-## 🔒 Recursos de Segurança
+## 🔒 Security Features
 
-- Autenticação via JWT
-- Proteção contra CSRF
-- Hashing de senhas com bcrypt
-- Validação de entrada com Zod
-- Recuperação segura de senha
-- Autorização baseada em roles
-- Middleware de proteção de rotas
+- JWT Authentication
+- CSRF Protection
+- Password hashing with bcrypt
+- Input validation with Zod
+- Secure password recovery
+- Role-based authorization
+- Route protection middleware
 
-## 🧪 Testes
+## 🧪 Tests
 
 ```bash
 npm run test
-# ou
+# or
 yarn test
 ```
 
-## 👨‍💻 Autor
+## 👨‍💻 Author
 
-Desenvolvido por Daniel Moura (https://github.com/danielmoura99).
+Developed by Daniel Moura (https://github.com/danielmoura99).
 
 ---
 
 <div align="center">
-  <p>© 2025 Daniel Moura. Todos os direitos reservados.</p>
+  <p>© 2025 Daniel Moura. All rights reserved.</p>
 </div>
