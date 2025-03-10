@@ -1,7 +1,8 @@
+// components/nav-user.tsx (modificação)
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
-import { User, LogOut, ChevronsUpDown } from "lucide-react";
+import { User, LogOut, Settings, ChevronsUpDown } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -19,6 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function NavUser() {
   const { data: session } = useSession();
@@ -32,6 +34,8 @@ export function NavUser() {
       .map((n: string) => n[0])
       .join("")
       .toUpperCase() || "??";
+
+  const isAdmin = session.user.role === "ADMIN";
 
   return (
     <SidebarMenu>
@@ -83,10 +87,21 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                Minha Conta
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <User className="mr-2 h-4 w-4" />
+                  Minha Conta
+                </Link>
               </DropdownMenuItem>
+
+              {isAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Painel Administrativo
+                  </Link>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut()}>

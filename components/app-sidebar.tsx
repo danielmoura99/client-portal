@@ -57,6 +57,14 @@ const data = {
           title: "Tutoriais",
           url: "/educational",
         },
+        {
+          title: "Cursos",
+          url: "/educational/cursos",
+        },
+        {
+          title: "Planilha de Aprovação",
+          url: "/educational/planilha-aprovacao",
+        },
       ],
     },
   ],

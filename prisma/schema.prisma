@@ -28,6 +28,73 @@ enum RequestType {
   GENERAL
 }
 
+enum ProductType {
+  COURSE
+  TOOL
+  EVALUATION
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  type        ProductType
+  slug        String      @unique
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relações
+  contents    Content[]
+  modules     Module[]
+  userProducts UserProduct[]
+}
+
+model Content {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   // "video", "file", "article", etc.
+  path        String   // Caminho para o arquivo ou URL
+  sortOrder   Int      @default(0)
+  
+  // Relações
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  moduleId    String?
+  module      Module?  @relation(fields: [moduleId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Module {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  sortOrder   Int       @default(0)
+  
+  // Relações
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  contents    Content[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model UserProduct {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, productId])
+}
+
 
 model User {
   id            String    @id @default(cuid())
@@ -46,6 +113,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   evaluations   Evaluation[]
   requests      Request[]
+  products    UserProduct[]
 }
 
 model Evaluation {
