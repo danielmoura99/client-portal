@@ -42,6 +42,7 @@ interface ProductContentsTableProps {
 
 export default function ProductContentsTable({
   initialContents,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   productId,
 }: ProductContentsTableProps) {
   const [searchQuery, setSearchQuery] = useState("");

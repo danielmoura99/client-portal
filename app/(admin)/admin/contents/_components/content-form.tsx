@@ -44,13 +44,14 @@ const contentFormSchema = z.object({
   path: z.string().min(1, {
     message: "O caminho/URL do arquivo é obrigatório",
   }),
+  sortOrder: z.number().default(0),
   // Não validamos o arquivo aqui, faremos isso no envio
 });
 
 type ContentFormValues = z.infer<typeof contentFormSchema>;
 
 interface ContentFormProps {
-  initialData?: ContentFormValues & { id: string };
+  initialData?: ContentFormValues & { id: string; sortOrder?: number };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   products: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,6 +77,7 @@ export function ContentForm({
         productId: initialData.productId,
         moduleId: initialData.moduleId || "",
         path: initialData.path,
+        sortOrder: initialData.sortOrder || 0,
       }
     : {
         title: "",
@@ -84,6 +86,7 @@ export function ContentForm({
         productId: "",
         moduleId: "",
         path: "",
+        sortOrder: 0,
       };
 
   const form = useForm<ContentFormValues>({
@@ -132,7 +135,7 @@ export function ContentForm({
       // Adicionar dados do formulário
       Object.entries(values).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          formData.append(key, value);
+          formData.append(key, String(value));
         }
       });
 
