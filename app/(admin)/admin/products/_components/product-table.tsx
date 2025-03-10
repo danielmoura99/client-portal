@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/(admin)/admin/products/_components/product-table.tsx
 "use client";
 
@@ -32,6 +33,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ProductType } from "@prisma/client";
+import { DeleteProductDialog } from "./delete-product-dialog";
 
 interface ProductTableProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,6 +44,10 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [products, setProducts] = useState(initialProducts);
+
+  // Estado para controlar o diálogo de exclusão
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<any>(null);
 
   // Filtrar produtos com base na pesquisa
   const filteredProducts = products.filter(
@@ -87,6 +93,11 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
       default:
         return <Badge variant="secondary">Desconhecido</Badge>;
     }
+  };
+
+  const handleDeleteClick = (product: any) => {
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
   };
 
   return (
@@ -178,7 +189,10 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-500 focus:text-red-500">
+                        <DropdownMenuItem
+                          className="text-red-500 focus:text-red-500"
+                          onClick={() => handleDeleteClick(product)}
+                        >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Excluir Produto
                         </DropdownMenuItem>
@@ -191,6 +205,15 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Diálogo de exclusão */}
+      {productToDelete && (
+        <DeleteProductDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          product={productToDelete}
+        />
+      )}
     </div>
   );
 }
