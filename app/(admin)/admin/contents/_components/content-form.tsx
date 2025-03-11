@@ -56,12 +56,14 @@ interface ContentFormProps {
   products: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   modules: any[];
+  defaultProductId?: string;
 }
 
 export function ContentForm({
   initialData,
   products,
   modules,
+  defaultProductId = "",
 }: ContentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -83,7 +85,7 @@ export function ContentForm({
         title: "",
         description: "",
         type: "file", // Padrão para arquivo
-        productId: "",
+        productId: defaultProductId,
         moduleId: "",
         path: "",
         sortOrder: 0,
@@ -132,8 +134,10 @@ export function ContentForm({
       // Criar FormData para upload de arquivo
       const formData = new FormData();
 
+      const moduleId = values.moduleId === "none" ? "" : values.moduleId;
+
       // Adicionar dados do formulário
-      Object.entries(values).forEach(([key, value]) => {
+      Object.entries({ ...values, moduleId }).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           formData.append(key, String(value));
         }
@@ -235,10 +239,15 @@ export function ContentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhum módulo</SelectItem>
-                      {filteredModules.map((module) => (
-                        <SelectItem key={module.id} value={module.id}>
-                          {module.title}
+                      {/* Substitua esta linha */}
+                      {/* <SelectItem value="">Nenhum módulo</SelectItem> */}
+
+                      {/* Por esta linha */}
+                      <SelectItem value="none">Nenhum módulo</SelectItem>
+
+                      {filteredModules.map((moduleItem) => (
+                        <SelectItem key={moduleItem.id} value={moduleItem.id}>
+                          {moduleItem.title}
                         </SelectItem>
                       ))}
                     </SelectContent>

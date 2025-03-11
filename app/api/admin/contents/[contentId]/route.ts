@@ -58,6 +58,8 @@ export async function PUT(
     const type = formData.get("type") as string;
     const productId = formData.get("productId") as string;
     const moduleId = formData.get("moduleId") as string | null;
+    const finalModuleId =
+      moduleId === "none" || moduleId === "" ? null : moduleId;
     const sortOrder = Number(formData.get("sortOrder") || 0);
     let filePath = formData.get("path") as string;
 
@@ -97,7 +99,7 @@ export async function PUT(
         type,
         path: filePath,
         productId,
-        moduleId: moduleId || null,
+        moduleId: finalModuleId,
         sortOrder,
       },
     });

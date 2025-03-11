@@ -41,7 +41,10 @@ export async function POST(req: NextRequest) {
     const type = formData.get("type") as string;
     const productId = formData.get("productId") as string;
     const moduleId = formData.get("moduleId") as string | null;
+    const finalModuleId =
+      moduleId === "none" || moduleId === "" ? null : moduleId;
     let filePath = formData.get("path") as string;
+    const sortOrder = Number(formData.get("sortOrder") || 0);
 
     // Validar dados essenciais
     if (!title || !type || !productId) {
@@ -80,7 +83,8 @@ export async function POST(req: NextRequest) {
         type,
         path: filePath, // Usar filePath em vez de path para evitar confusão
         productId,
-        moduleId: moduleId || undefined,
+        moduleId: finalModuleId, // Use finalModuleId aqui
+        sortOrder, // Adicione o sortOrder aqui
       },
     });
 

@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useEffect, useState } from "react";
-import { getSession } from "next-auth/react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ChevronLeft, Plus } from "lucide-react";
 import ProductContentsTable from "./_components/product-contents-table";
 import ModuleList from "./_components/module-list";
 import ContentViewToggle from "./_components/content-view-toggle";
-import { Separator } from "@/components/ui/separator";
-import { fetchProductWithContents } from "./_actions";
+import { AddExistingContentDialog } from "./_components/add-existing-content-dialog";
 
 interface ProductContentsClientPageProps {
   productId: string;
@@ -30,36 +29,13 @@ export default function ProductContentsClientPage({
   productId,
   initialProduct,
 }: ProductContentsClientPageProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [product, setProduct] = useState(initialProduct);
   const [activeView, setActiveView] = useState<"modules" | "contents">(
     "modules"
   );
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const session = await getSession();
-
-      if (!session?.user || session.user.role !== "ADMIN") {
-        redirect("/admin");
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const refreshData = async () => {
-    try {
-      const updatedProduct = await fetchProductWithContents(productId);
-      if (updatedProduct) {
-        setProduct(updatedProduct);
-      }
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -72,7 +48,7 @@ export default function ProductContentsClientPage({
             </Link>
           </Button>
           <h1 className="text-2xl font-bold text-white mb-2">
-            Gerenciar Produto
+            Conteúdos do Produto
           </h1>
           <p className="text-zinc-400">{product.name}</p>
         </div>
@@ -86,17 +62,18 @@ export default function ProductContentsClientPage({
               </Link>
             </Button>
           ) : (
-            <Button asChild>
-              <Link href={`/admin/contents/new?productId=${productId}`}>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Conteúdo
-              </Link>
-            </Button>
+            <>
+              <AddExistingContentDialog productId={product.id} />
+              <Button asChild>
+                <Link href={`/admin/contents/new?productId=${productId}`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Conteúdo
+                </Link>
+              </Button>
+            </>
           )}
         </div>
       </div>
-
-      <Separator />
 
       <ContentViewToggle onViewChange={setActiveView} defaultView="modules" />
 
@@ -116,12 +93,15 @@ export default function ProductContentsClientPage({
           <p className="text-zinc-400">
             Este produto ainda não possui conteúdos.
           </p>
-          <Button asChild className="mt-4">
-            <Link href={`/admin/contents/new?productId=${productId}`}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Primeiro Conteúdo
-            </Link>
-          </Button>
+          <div className="flex justify-center gap-4 mt-4">
+            <AddExistingContentDialog productId={product.id} />
+            <Button asChild>
+              <Link href={`/admin/contents/new?productId=${productId}`}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Novo Conteúdo
+              </Link>
+            </Button>
+          </div>
         </div>
       )}
     </div>

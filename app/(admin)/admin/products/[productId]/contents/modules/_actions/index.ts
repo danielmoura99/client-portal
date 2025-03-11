@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 // Schema para validação
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const moduleSchema = z.object({
   title: z
     .string()
@@ -16,10 +17,14 @@ const moduleSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type ModuleData = z.infer<typeof moduleSchema>;
 
-// Criar um novo módulo
-export async function createModule(productId: string, data: ModuleData) {
+// Criar módulo
+export async function createModule(
+  productId: string,
+  data: z.infer<typeof moduleSchema>
+) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -36,34 +41,29 @@ export async function createModule(productId: string, data: ModuleData) {
       throw new Error("Produto não encontrado");
     }
 
-    // Validar dados
-    const validatedData = moduleSchema.parse(data);
-
     // Criar módulo
-    const module = await prisma.module.create({
+    const moduleItem = await prisma.module.create({
       data: {
-        title: validatedData.title,
-        description: validatedData.description,
-        sortOrder: validatedData.sortOrder,
-        productId: productId,
+        title: data.title,
+        description: data.description || null,
+        sortOrder: data.sortOrder,
+        productId,
       },
     });
 
-    // Revalidar páginas que exibem módulos
     revalidatePath(`/admin/products/${productId}/contents`);
-
-    return { success: true, module };
+    return moduleItem;
   } catch (error) {
     console.error("Erro ao criar módulo:", error);
     throw error;
   }
 }
 
-// Atualizar um módulo existente
+// Atualizar módulo
 export async function updateModule(
   moduleId: string,
   productId: string,
-  data: ModuleData
+  data: z.infer<typeof moduleSchema>
 ) {
   const session = await getServerSession(authOptions);
 
@@ -81,36 +81,25 @@ export async function updateModule(
       throw new Error("Módulo não encontrado");
     }
 
-    // Verificar se o módulo pertence ao produto especificado
-    if (existingModule.productId !== productId) {
-      throw new Error("Módulo não pertence ao produto especificado");
-    }
-
-    // Validar dados
-    const validatedData = moduleSchema.parse(data);
-
     // Atualizar módulo
-    const module = await prisma.module.update({
+    const updatedModule = await prisma.module.update({
       where: { id: moduleId },
       data: {
-        title: validatedData.title,
-        description: validatedData.description,
-        sortOrder: validatedData.sortOrder,
+        title: data.title,
+        description: data.description || null,
+        sortOrder: data.sortOrder,
       },
     });
 
-    // Revalidar páginas que exibem módulos
     revalidatePath(`/admin/products/${productId}/contents`);
-    revalidatePath(`/admin/products/${productId}/contents/modules/${moduleId}`);
-
-    return { success: true, module };
+    return updatedModule;
   } catch (error) {
     console.error("Erro ao atualizar módulo:", error);
     throw error;
   }
 }
 
-// Excluir um módulo
+// Excluir módulo
 export async function deleteModule(moduleId: string, productId: string) {
   const session = await getServerSession(authOptions);
 
@@ -119,8 +108,8 @@ export async function deleteModule(moduleId: string, productId: string) {
   }
 
   try {
-    // Verificar se o módulo existe
-    const module = await prisma.module.findUnique({
+    // Verificar se o módulo existe e se tem conteúdos associados
+    const moduleWithContents = await prisma.module.findUnique({
       where: { id: moduleId },
       include: {
         _count: {
@@ -129,30 +118,22 @@ export async function deleteModule(moduleId: string, productId: string) {
       },
     });
 
-    if (!module) {
+    if (!moduleWithContents) {
       throw new Error("Módulo não encontrado");
     }
 
-    // Verificar se o módulo pertence ao produto especificado
-    if (module.productId !== productId) {
-      throw new Error("Módulo não pertence ao produto especificado");
-    }
-
-    // Verificar se o módulo possui conteúdos associados
-    if (module._count.contents > 0) {
+    if (moduleWithContents._count.contents > 0) {
       throw new Error(
-        "Este módulo possui conteúdos associados e não pode ser excluído"
+        "Não é possível excluir o módulo porque existem conteúdos associados a ele"
       );
     }
 
-    // Excluir o módulo
+    // Excluir módulo
     await prisma.module.delete({
       where: { id: moduleId },
     });
 
-    // Revalidar páginas que exibem módulos
     revalidatePath(`/admin/products/${productId}/contents`);
-
     return { success: true };
   } catch (error) {
     console.error("Erro ao excluir módulo:", error);

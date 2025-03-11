@@ -31,15 +31,12 @@ export default async function EditModulePage({ params }: PageProps) {
     notFound();
   }
 
-  // Buscar o módulo a ser editado
-  const module = await prisma.module.findUnique({
-    where: {
-      id: params.moduleId,
-      productId: params.productId,
-    },
+  // Buscar o módulo (precisa renomear esta variável)
+  const moduleItem = await prisma.module.findUnique({
+    where: { id: params.moduleId },
   });
 
-  if (!module) {
+  if (!moduleItem) {
     notFound();
   }
 
@@ -54,20 +51,12 @@ export default async function EditModulePage({ params }: PageProps) {
         </Button>
         <h1 className="text-2xl font-bold text-white mb-2">Editar Módulo</h1>
         <p className="text-zinc-400">
-          {module.title} - {product.name}
+          {moduleItem.title} - {product.name}
         </p>
       </div>
 
       <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 max-w-md">
-        <ModuleForm
-          productId={params.productId}
-          initialData={{
-            id: module.id,
-            title: module.title,
-            description: module.description || "",
-            sortOrder: module.sortOrder,
-          }}
-        />
+        <ModuleForm productId={params.productId} initialData={moduleItem} />
       </div>
     </div>
   );
