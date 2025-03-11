@@ -20,7 +20,7 @@ interface ProductContentsClientPageProps {
     description: string;
     type: string;
     slug: string;
-    contents: any[];
+    productContents: any[]; // Agora usamos productContents em vez de contents
     modules: any[];
   };
 }
@@ -83,9 +83,9 @@ export default function ProductContentsClientPage({
           <ModuleList modules={product.modules} productId={product.id} />
         </div>
       ) : /* Lista de conteúdos */
-      product.contents.length > 0 ? (
+      product.productContents.length > 0 ? (
         <ProductContentsTable
-          initialContents={product.contents}
+          initialContents={product.productContents}
           productId={product.id}
         />
       ) : (

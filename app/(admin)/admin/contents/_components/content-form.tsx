@@ -57,6 +57,11 @@ interface ContentFormProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   modules: any[];
   defaultProductId?: string;
+  productContents?: {
+    productId: string;
+    moduleId: string | null;
+    sortOrder: number;
+  }[];
 }
 
 export function ContentForm({

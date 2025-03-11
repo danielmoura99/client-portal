@@ -57,6 +57,18 @@ export default async function NewContentPage({
         products={products}
         modules={modules}
         defaultProductId={productId}
+        // Corrigido para productContents ao invés de initialProductContents
+        productContents={
+          productId
+            ? [
+                {
+                  productId: productId,
+                  moduleId: null,
+                  sortOrder: 0,
+                },
+              ]
+            : []
+        }
       />
     </div>
   );

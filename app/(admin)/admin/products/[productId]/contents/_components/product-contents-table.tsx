@@ -36,7 +36,7 @@ import Link from "next/link";
 import { DeleteContentDialog } from "./delete-content-dialog";
 
 interface ProductContentsTableProps {
-  initialContents: any[];
+  initialContents: any[]; // ProductContent[]
   productId: string;
 }
 
@@ -46,19 +46,22 @@ export default function ProductContentsTable({
   productId,
 }: ProductContentsTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [contents, setContents] = useState(initialContents);
+  const [productContents, setProductContents] = useState(initialContents);
 
   // Estado para controlar o diálogo de exclusão
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<any>(null);
 
   // Filtrar conteúdos com base na pesquisa
-  const filteredContents = contents.filter(
-    (content) =>
+  const filteredContents = productContents.filter((productContent) => {
+    // Usando a estrutura content dentro de productContent
+    const content = productContent.content;
+    return (
       content.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       content.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       content.module?.title?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    );
+  });
 
   // Helper para ícones de tipo de conteúdo
   const getContentTypeIcon = (type: string, path?: string) => {
@@ -92,8 +95,8 @@ export default function ProductContentsTable({
     }
   };
 
-  const handleDeleteClick = (content: any) => {
-    setContentToDelete(content);
+  const handleDeleteClick = (productContent: any) => {
+    setContentToDelete(productContent);
     setDeleteDialogOpen(true);
   };
 
@@ -101,8 +104,10 @@ export default function ProductContentsTable({
     window.open(`/api/contents/${contentId}`, "_blank");
   };
 
-  const handleContentDeleted = (contentId: string) => {
-    setContents(contents.filter((content) => content.id !== contentId));
+  const handleContentDeleted = (productContentId: string) => {
+    setProductContents(
+      productContents.filter((pc) => pc.id !== productContentId)
+    );
   };
 
   return (
@@ -142,80 +147,84 @@ export default function ProductContentsTable({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredContents.map((content) => (
-                <TableRow
-                  key={content.id}
-                  className="border-zinc-800 hover:bg-zinc-900/50"
-                >
-                  <TableCell className="font-medium text-zinc-200">
-                    <div className="flex items-center gap-2">
-                      {getContentTypeIcon(content.type, content.path)}
-                      <span>{content.title}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="bg-zinc-800/50">
-                      {getContentTypeName(content.type)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-zinc-400">
-                    {content.module ? content.module.title : "—"}
-                  </TableCell>
-                  <TableCell className="text-zinc-400">
-                    {content.sortOrder}
-                  </TableCell>
-                  <TableCell className="text-zinc-400 truncate max-w-[200px]">
-                    <div className="flex items-center gap-1">
-                      {content.path.startsWith("http") ? (
-                        <ExternalLink className="h-3 w-3 text-blue-500" />
-                      ) : (
-                        <File className="h-3 w-3 text-zinc-500" />
-                      )}
-                      <span className="truncate">{content.path}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end items-center gap-1">
-                      {content.type === "file" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDownload(content.id)}
-                          title="Baixar arquivo"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      )}
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/contents/${content.id}`}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Editar Conteúdo
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-red-500 focus:text-red-500"
-                            onClick={() => handleDeleteClick(content)}
+              filteredContents.map((productContent) => {
+                // Extraindo o objeto content de productContent
+                const content = productContent.content;
+                return (
+                  <TableRow
+                    key={productContent.id}
+                    className="border-zinc-800 hover:bg-zinc-900/50"
+                  >
+                    <TableCell className="font-medium text-zinc-200">
+                      <div className="flex items-center gap-2">
+                        {getContentTypeIcon(content.type, content.path)}
+                        <span>{content.title}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-zinc-800/50">
+                        {getContentTypeName(content.type)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-zinc-400">
+                      {content.module ? content.module.title : "—"}
+                    </TableCell>
+                    <TableCell className="text-zinc-400">
+                      {productContent.sortOrder}
+                    </TableCell>
+                    <TableCell className="text-zinc-400 truncate max-w-[200px]">
+                      <div className="flex items-center gap-1">
+                        {content.path.startsWith("http") ? (
+                          <ExternalLink className="h-3 w-3 text-blue-500" />
+                        ) : (
+                          <File className="h-3 w-3 text-zinc-500" />
+                        )}
+                        <span className="truncate">{content.path}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center gap-1">
+                        {content.type === "file" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDownload(content.id)}
+                            title="Baixar arquivo"
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir Conteúdo
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/admin/contents/${content.id}`}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Editar Conteúdo
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-500 focus:text-red-500"
+                              onClick={() => handleDeleteClick(productContent)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Excluir Conteúdo
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

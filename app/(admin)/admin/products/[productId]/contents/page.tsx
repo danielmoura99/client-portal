@@ -18,39 +18,60 @@ export default async function ProductContentsPage({ params }: PageProps) {
     redirect("/admin");
   }
 
-  // Buscar o produto com seus conteúdos
-  const product = await prisma.product.findUnique({
-    where: { id: params.productId },
-    include: {
-      contents: {
-        include: {
-          module: true,
-        },
-        orderBy: {
-          sortOrder: "asc",
-        },
-      },
-      modules: {
-        orderBy: {
-          sortOrder: "asc",
-        },
-        include: {
-          _count: {
-            select: { contents: true },
-          },
-        },
-      },
-    },
-  });
+  try {
+    // Buscar o produto com seus conteúdos usando as relações corretas conforme o schema
+    const product = await prisma.product.findUnique({
+      where: { id: params.productId },
+    });
 
-  if (!product) {
-    notFound();
+    if (!product) {
+      notFound();
+    }
+
+    // Buscar os módulos do produto
+    const modules = await prisma.module.findMany({
+      where: { productId: params.productId },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        _count: {
+          select: { contents: true },
+        },
+      },
+    });
+
+    // Buscar os ProductContent para este produto, incluindo Content e Module
+    const productContents = await prisma.productContent.findMany({
+      where: { productId: params.productId },
+      include: {
+        content: true,
+        module: true,
+      },
+      orderBy: { sortOrder: "asc" },
+    });
+
+    // Construir o objeto formatado conforme esperado pelo componente cliente
+    const formattedProduct = {
+      ...product,
+      type: product.type.toString(),
+      productContents: productContents,
+      modules: modules,
+      // Para compatibilidade com componentes existentes
+      contents: productContents.map((pc) => ({
+        ...pc.content,
+        moduleId: pc.moduleId,
+        sortOrder: pc.sortOrder,
+        productContentId: pc.id,
+      })),
+    };
+
+    return (
+      <ProductContentsClientPage
+        productId={params.productId}
+        initialProduct={formattedProduct}
+      />
+    );
+  } catch (error) {
+    console.error("Erro ao buscar produto com conteúdos:", error);
+    throw error;
   }
-
-  return (
-    <ProductContentsClientPage
-      productId={params.productId}
-      initialProduct={product}
-    />
-  );
 }

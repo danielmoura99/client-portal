@@ -14,6 +14,9 @@ interface ContentViewerProps {
     type: string;
     path: string;
     description?: string | null;
+    productContentId?: string;
+    moduleId?: string | null;
+    sortOrder?: number;
   };
 }
 

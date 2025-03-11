@@ -33,30 +33,24 @@ export async function checkUserAccess(
 
   // Verificação baseada em contentId específico
   if (options.contentId) {
-    const content = await prisma.content.findUnique({
-      where: { id: options.contentId },
-      include: { product: true },
-    });
-
-    if (!content) return false;
-
-    // Verificar se o usuário tem acesso ao produto relacionado
-    const userProduct = await prisma.userProduct.findUnique({
+    // Alterado para verificar através de ProductContent
+    const productContent = await prisma.productContent.findFirst({
       where: {
-        userId_productId: {
-          userId: userId,
-          productId: content.productId,
+        contentId: options.contentId,
+        product: {
+          userProducts: {
+            some: {
+              userId: userId,
+              expiresAt: {
+                gte: new Date(),
+              },
+            },
+          },
         },
       },
     });
 
-    // Verificar se o produto não expirou
-    if (
-      userProduct &&
-      (!userProduct.expiresAt || userProduct.expiresAt > new Date())
-    ) {
-      return true;
-    }
+    if (productContent) return true;
 
     return false;
   }
@@ -135,11 +129,13 @@ export async function getUserProducts(
 
 // Função para obter conteúdos de um produto
 export async function getProductContents(productId: string) {
-  return prisma.content.findMany({
+  // Alterado para usar ProductContent
+  return prisma.productContent.findMany({
     where: { productId },
-    orderBy: { sortOrder: "asc" },
     include: {
+      content: true,
       module: true,
     },
+    orderBy: { sortOrder: "asc" },
   });
 }

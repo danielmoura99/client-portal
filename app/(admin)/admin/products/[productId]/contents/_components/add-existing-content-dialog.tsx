@@ -15,13 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Search, Plus, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { addExistingContentsToProduct } from "../_actions";
@@ -31,16 +24,12 @@ interface Content {
   title: string;
   type: string;
   path: string;
-  productId: string;
-  product: {
-    name: string;
-  };
-}
-
-interface Module {
-  id: string;
-  title: string;
-  description?: string | null;
+  products?: {
+    product: {
+      id: string;
+      name: string;
+    };
+  }[];
 }
 
 interface AddExistingContentDialogProps {
@@ -52,15 +41,10 @@ export function AddExistingContentDialog({
 }: AddExistingContentDialogProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingModules, setIsLoadingModules] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [contents, setContents] = useState<Content[]>([]);
-  const [modules, setModules] = useState<Module[]>([]);
   const [selectedContents, setSelectedContents] = useState<string[]>([]);
-  const [contentModules, setContentModules] = useState<Record<string, string>>(
-    {}
-  );
   const router = useRouter();
 
   // Carregar conteúdos disponíveis quando o diálogo for aberto
@@ -72,9 +56,13 @@ export function AddExistingContentDialog({
           const response = await fetch("/api/admin/contents/available");
           if (!response.ok) throw new Error("Falha ao carregar conteúdos");
           const data = await response.json();
-          // Filtrar conteúdos que já não pertencem ao produto atual
+
+          // Filtrar conteúdos que já não estão associados ao produto atual
           const filteredContents = data.contents.filter(
-            (content: Content) => content.productId !== productId
+            (content: Content) =>
+              !content.products?.some(
+                (productContent) => productContent.product.id === productId
+              )
           );
           setContents(filteredContents);
         } catch (error) {
@@ -93,35 +81,6 @@ export function AddExistingContentDialog({
     } else {
       // Limpar seleção quando o diálogo for fechado
       setSelectedContents([]);
-      setContentModules({});
-    }
-  }, [open, productId]);
-
-  // Carregar módulos do produto atual
-  useEffect(() => {
-    if (open) {
-      const fetchModules = async () => {
-        try {
-          setIsLoadingModules(true);
-          const response = await fetch(
-            `/api/admin/products/${productId}/modules`
-          );
-          if (!response.ok) throw new Error("Falha ao carregar módulos");
-          const data = await response.json();
-          setModules(data.modules);
-        } catch (error) {
-          console.error("Erro ao carregar módulos:", error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar os módulos do produto",
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoadingModules(false);
-        }
-      };
-
-      fetchModules();
     }
   }, [open, productId]);
 
@@ -129,7 +88,9 @@ export function AddExistingContentDialog({
   const filteredContents = contents.filter(
     (content) =>
       content.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      content.product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      content.products?.some((pc) =>
+        pc.product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
   const handleToggleContent = (contentId: string) => {
@@ -138,15 +99,6 @@ export function AddExistingContentDialog({
         ? prev.filter((id) => id !== contentId)
         : [...prev, contentId]
     );
-
-    // Se estiver removendo o conteúdo da seleção, também remove sua associação com módulo
-    if (selectedContents.includes(contentId)) {
-      setContentModules((prev) => {
-        const newModules = { ...prev };
-        delete newModules[contentId];
-        return newModules;
-      });
-    }
   };
 
   const handleAddContents = async () => {
@@ -161,21 +113,11 @@ export function AddExistingContentDialog({
 
     try {
       setIsSubmitting(true);
-
-      // Preparar os dados com conteúdos e seus respectivos módulos
-      const contentsWithModules = selectedContents.map((contentId) => ({
-        contentId,
-        moduleId: contentModules[contentId] || null,
-      }));
-
-      // Chamar a server action modificada
-      await addExistingContentsToProduct(productId, contentsWithModules);
-
+      await addExistingContentsToProduct(productId, selectedContents);
       toast({
         title: "Conteúdos adicionados",
         description: `${selectedContents.length} conteúdo(s) adicionado(s) ao produto`,
       });
-
       setOpen(false);
       router.refresh();
     } catch (error) {
@@ -235,62 +177,31 @@ export function AddExistingContentDialog({
               {filteredContents.map((content) => (
                 <div
                   key={content.id}
-                  className="flex flex-col space-y-2 p-2 hover:bg-zinc-800/30 rounded-md"
+                  className="flex items-center space-x-2 p-2 hover:bg-zinc-800/30 rounded-md"
                 >
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`content-${content.id}`}
-                      checked={selectedContents.includes(content.id)}
-                      onCheckedChange={() => handleToggleContent(content.id)}
-                    />
-                    <div className="flex-1 overflow-hidden">
-                      <label
-                        htmlFor={`content-${content.id}`}
-                        className="cursor-pointer flex flex-col"
-                      >
-                        <span className="font-medium text-zinc-200 truncate">
-                          {content.title}
-                        </span>
-                        <span className="text-xs text-zinc-500">
-                          {content.product.name} • {content.type}
-                        </span>
-                      </label>
-                    </div>
+                  <Checkbox
+                    id={`content-${content.id}`}
+                    checked={selectedContents.includes(content.id)}
+                    onCheckedChange={() => handleToggleContent(content.id)}
+                  />
+                  <div className="flex-1 overflow-hidden">
+                    <label
+                      htmlFor={`content-${content.id}`}
+                      className="cursor-pointer flex flex-col"
+                    >
+                      <span className="font-medium text-zinc-200 truncate">
+                        {content.title}
+                      </span>
+                      <span className="text-xs text-zinc-500">
+                        {content.products && content.products.length > 0
+                          ? content.products
+                              .map((pc) => pc.product.name)
+                              .join(", ")
+                          : "Sem produtos"}{" "}
+                        • {content.type}
+                      </span>
+                    </label>
                   </div>
-
-                  {/* Seletor de módulo para conteúdos selecionados */}
-                  {selectedContents.includes(content.id) && (
-                    <div className="pl-6 mt-1">
-                      {isLoadingModules ? (
-                        <div className="flex items-center text-xs text-zinc-500">
-                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                          Carregando módulos...
-                        </div>
-                      ) : (
-                        <Select
-                          value={contentModules[content.id] || ""}
-                          onValueChange={(value) => {
-                            setContentModules((prev) => ({
-                              ...prev,
-                              [content.id]: value,
-                            }));
-                          }}
-                        >
-                          <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Selecione um módulo (opcional)" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">Sem módulo</SelectItem>
-                            {modules.map((module) => (
-                              <SelectItem key={module.id} value={module.id}>
-                                {module.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

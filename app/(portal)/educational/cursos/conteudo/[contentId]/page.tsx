@@ -23,18 +23,32 @@ export default async function ContentPage({ params }: ContentPageProps) {
     redirect("/login");
   }
 
-  // Buscar o conteúdo solicitado
-  const content = await prisma.content.findUnique({
+  // Buscar o conteúdo solicitado com seu relacionamento ao produto através da tabela ProductContent
+  const contentWithProductRelation = await prisma.content.findUnique({
     where: { id: params.contentId },
     include: {
-      product: true,
-      module: true,
+      productContents: {
+        include: {
+          product: true,
+          module: true,
+        },
+        take: 1, // Pegamos o primeiro relacionamento para referência
+      },
     },
   });
 
-  if (!content) {
+  if (
+    !contentWithProductRelation ||
+    contentWithProductRelation.productContents.length === 0
+  ) {
     notFound();
   }
+
+  // Extrair informações do primeiro relacionamento de produto
+  const firstProductContent = contentWithProductRelation.productContents[0];
+  const product = firstProductContent.product;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const moduleItem = firstProductContent.module;
 
   // Verificar acesso do usuário ao conteúdo
   const hasAccess = await checkUserAccess(session.user.id, {
@@ -46,9 +60,12 @@ export default async function ContentPage({ params }: ContentPageProps) {
   }
 
   // Buscar todos os conteúdos do produto para exibir no menu lateral
-  const allContents = await prisma.content.findMany({
-    where: { productId: content.productId },
-    include: { module: true },
+  const productContents = await prisma.productContent.findMany({
+    where: { productId: product.id },
+    include: {
+      content: true,
+      module: true,
+    },
     orderBy: { sortOrder: "asc" },
   });
 
@@ -56,47 +73,68 @@ export default async function ContentPage({ params }: ContentPageProps) {
   const moduleMap = new Map();
 
   // Adicionar conteúdos sem módulo em um grupo "default"
-  const noModuleContents = allContents.filter((c) => !c.moduleId);
+  const noModuleContents = productContents.filter((pc) => !pc.moduleId);
   if (noModuleContents.length > 0) {
     moduleMap.set("default", {
       id: "default",
       title: "Conteúdo Principal",
-      contents: noModuleContents,
+      contents: noModuleContents.map((pc) => ({
+        id: pc.content.id,
+        title: pc.content.title,
+        type: pc.content.type,
+      })),
     });
   }
 
   // Agrupar o resto dos conteúdos por seus módulos
-  allContents
-    .filter((c) => c.moduleId)
-    .forEach((c) => {
-      if (!moduleMap.has(c.moduleId)) {
-        moduleMap.set(c.moduleId, {
-          id: c.module?.id,
-          title: c.module?.title,
+  productContents
+    .filter((pc) => pc.moduleId)
+    .forEach((pc) => {
+      if (!moduleMap.has(pc.moduleId)) {
+        moduleMap.set(pc.moduleId, {
+          id: pc.module?.id,
+          title: pc.module?.title,
           contents: [],
         });
       }
 
-      moduleMap.get(c.moduleId).contents.push(c);
+      moduleMap.get(pc.moduleId).contents.push({
+        id: pc.content.id,
+        title: pc.content.title,
+        type: pc.content.type,
+      });
     });
 
   // Converter o mapa em array para renderização
   const modules = Array.from(moduleMap.values());
+
+  // Preparar objeto de conteúdo para o visualizador
+  const contentForViewer = {
+    id: contentWithProductRelation.id,
+    title: contentWithProductRelation.title,
+    type: contentWithProductRelation.type,
+    path: contentWithProductRelation.path,
+    description: contentWithProductRelation.description,
+  };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center">
           <Button asChild variant="ghost" size="sm" className="mr-2">
-            <Link href={`/educational/cursos/${content.product.slug}`}>
+            <Link href={`/educational/cursos/${product.slug}`}>
               <ChevronLeft className="mr-1 h-4 w-4" />
               Voltar ao curso
             </Link>
           </Button>
         </div>
-        <h1 className="text-2xl font-bold text-zinc-100">{content.title}</h1>
-        {content.description && (
-          <p className="text-zinc-400">{content.description}</p>
+        <h1 className="text-2xl font-bold text-zinc-100">
+          {contentWithProductRelation.title}
+        </h1>
+        {contentWithProductRelation.description && (
+          <p className="text-zinc-400">
+            {contentWithProductRelation.description}
+          </p>
         )}
       </div>
 
@@ -105,7 +143,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
         <div className="md:col-span-1 order-2 md:order-1">
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 sticky top-4">
             <h2 className="text-lg font-medium text-zinc-100 mb-4">
-              {content.product.name}
+              {product.name}
             </h2>
 
             <ContentList
@@ -117,7 +155,7 @@ export default async function ContentPage({ params }: ContentPageProps) {
 
         {/* Área de visualização de conteúdo */}
         <div className="md:col-span-2 order-1 md:order-2">
-          <ContentViewer content={content} />
+          <ContentViewer content={contentForViewer} />
         </div>
       </div>
     </div>

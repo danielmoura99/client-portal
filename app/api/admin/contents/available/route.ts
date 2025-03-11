@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -13,13 +12,21 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Buscar todos os conteúdos com seus produtos
+    // Extrair parâmetros da consulta
+    const url = new URL(req.url);
+    const productId = url.searchParams.get("productId");
+
+    // Buscar todos os conteúdos
     const contents = await prisma.content.findMany({
       include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
+        productContents: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -28,7 +35,44 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return Response.json({ contents });
+    // Filtrar conteúdos que ainda não estão associados ao produto especificado, se um productId foi fornecido
+    let availableContents = contents;
+
+    if (productId) {
+      availableContents = contents.filter((content) => {
+        // Verifica se o conteúdo não está associado ao produto especificado
+        return !content.productContents.some(
+          (pc) => pc.productId === productId
+        );
+      });
+    }
+
+    // Formatar os conteúdos para a resposta
+    const formattedContents = availableContents.map((content) => {
+      const productAssociations = content.productContents.map((pc) => ({
+        productId: pc.productId,
+        productName: pc.product.name,
+      }));
+
+      // Obtém o primeiro produto associado para compatibilidade com o frontend existente
+      const primaryAssociation = content.productContents[0];
+
+      return {
+        id: content.id,
+        title: content.title,
+        description: content.description,
+        type: content.type,
+        path: content.path,
+        // Campos para compatibilidade com frontend existente
+        product: primaryAssociation?.product || null,
+        // Novos campos com informações mais detalhadas
+        productAssociations,
+        // Remover campos brutos da resposta
+        productContents: undefined,
+      };
+    });
+
+    return Response.json({ contents: formattedContents });
   } catch (error) {
     console.error("Erro ao buscar conteúdos disponíveis:", error);
     return Response.json(

@@ -21,12 +21,17 @@ export default async function EditContentPage({ params }: PageProps) {
     redirect("/admin");
   }
 
-  // Buscar o conteúdo
+  // Buscar o conteúdo conforme definido no schema Prisma
   const content = await prisma.content.findUnique({
     where: { id: params.contentId },
     include: {
-      product: true,
-      module: true,
+      // Usando o nome correto do campo na relação
+      productContents: {
+        include: {
+          product: true,
+          module: true,
+        },
+      },
     },
   });
 
@@ -39,19 +44,39 @@ export default async function EditContentPage({ params }: PageProps) {
     orderBy: { name: "asc" },
   });
 
-  // Buscar todos os módulos do produto atual
+  // Buscar módulos para os produtos relacionados a este conteúdo
+  const productIds = content.productContents.map((pc) => pc.productId);
+
+  // Se houver pelo menos um produto associado, use o primeiro como padrão
+  const defaultProductId = productIds.length > 0 ? productIds[0] : undefined;
+
+  // Buscar módulos relacionados aos produtos
   const modules = await prisma.module.findMany({
-    where: { productId: content.productId },
+    where: {
+      productId: {
+        in: productIds,
+      },
+    },
     orderBy: { title: "asc" },
   });
+
+  // Se tivermos vários produtos, vamos usar o primeiro para exibição no formulário
+  const firstProductContent = content.productContents[0];
 
   return (
     <div className="space-y-6">
       <div>
         <Button asChild variant="ghost" size="sm" className="mb-2">
-          <Link href={`/admin/products/${content.productId}/contents`}>
+          <Link
+            href={
+              firstProductContent
+                ? `/admin/products/${firstProductContent.productId}/contents`
+                : "/admin/contents"
+            }
+          >
             <ChevronLeft className="h-4 w-4 mr-1" />
-            Voltar para Conteúdos
+            Voltar para{" "}
+            {firstProductContent ? "Conteúdos do Produto" : "Conteúdos"}
           </Link>
         </Button>
         <h1 className="text-2xl font-bold text-white mb-2">Editar Conteúdo</h1>
@@ -64,13 +89,24 @@ export default async function EditContentPage({ params }: PageProps) {
           title: content.title,
           description: content.description || "",
           type: content.type,
-          productId: content.productId,
-          moduleId: content.moduleId || "",
           path: content.path,
-          sortOrder: content.sortOrder,
+          // Se houver produto associado, use o primeiro
+          productId: defaultProductId || "",
+          // Se o primeiro produto tiver módulo, use-o
+          moduleId: firstProductContent?.moduleId || "",
+          // Use a ordem do primeiro produto, se disponível
+          sortOrder: firstProductContent?.sortOrder || 0,
+          // Ajustado para o tipo esperado pelo componente ContentForm
+          // Nota: Isso depende de como está definido no ContentForm
         }}
         products={products}
         modules={modules}
+        // Passamos separadamente as informações de produto-conteúdo
+        productContents={content.productContents.map((pc) => ({
+          productId: pc.productId,
+          moduleId: pc.moduleId,
+          sortOrder: pc.sortOrder,
+        }))}
       />
     </div>
   );
