@@ -15,15 +15,26 @@ export async function getProductContents(productId: string) {
   }
 
   try {
-    const contents = await prisma.content.findMany({
+    // Modificado: agora busca através da tabela ProductContent
+    const productContents = await prisma.productContent.findMany({
       where: { productId },
       include: {
-        module: true, // Este é o nome da relação no Prisma, não uma variável
+        content: true,
+        module: true,
       },
       orderBy: {
         sortOrder: "asc",
       },
     });
+
+    // Transformar para manter compatibilidade com código existente
+    const contents = productContents.map((pc) => ({
+      ...pc.content,
+      sortOrder: pc.sortOrder,
+      productId: pc.productId,
+      moduleId: pc.moduleId,
+      productContentId: pc.id, // Adiciona o ID da relação
+    }));
 
     return contents;
   } catch (error) {
@@ -41,14 +52,18 @@ export async function reorderContents(productId: string, contentIds: string[]) {
   }
 
   try {
-    // Atualizar a ordem de cada conteúdo
+    // Atualizar a ordem de cada conteúdo no relacionamento ProductContent
     await Promise.all(
-      contentIds.map((id, index) =>
-        prisma.content.update({
-          where: { id },
+      contentIds.map(async (id, index) => {
+        // Buscar o ProductContent correspondente
+        await prisma.productContent.updateMany({
+          where: {
+            contentId: id,
+            productId,
+          },
           data: { sortOrder: index },
-        })
-      )
+        });
+      })
     );
 
     revalidatePath(`/admin/products/${productId}/contents`);
@@ -83,9 +98,12 @@ export async function assignContentToModule(
       }
     }
 
-    // Atualizar conteúdo com o módulo
-    await prisma.content.update({
-      where: { id: contentId },
+    // Atualizar a relação ProductContent com o módulo
+    await prisma.productContent.updateMany({
+      where: {
+        contentId,
+        productId,
+      },
       data: { moduleId },
     });
 
@@ -130,19 +148,36 @@ export async function addExistingContentsToProduct(
       throw new Error("Um ou mais conteúdos selecionados não existem");
     }
 
-    // Atualizar cada conteúdo para o novo produto
-    const updatePromises = contentIds.map((contentId) =>
-      prisma.content.update({
-        where: { id: contentId },
-        data: {
-          productId,
-          // Defina moduleId como null ao mover para outro produto
-          moduleId: null,
+    // Verificar quais conteúdos já estão associados ao produto
+    const existingAssociations = await prisma.productContent.findMany({
+      where: {
+        productId,
+        contentId: {
+          in: contentIds,
         },
-      })
+      },
+      select: { contentId: true },
+    });
+
+    const existingContentIds = existingAssociations.map((e) => e.contentId);
+    const newContentIds = contentIds.filter(
+      (id) => !existingContentIds.includes(id)
     );
 
-    await Promise.all(updatePromises);
+    // Criar apenas as novas associações
+    if (newContentIds.length > 0) {
+      const createPromises = newContentIds.map((contentId) =>
+        prisma.productContent.create({
+          data: {
+            productId,
+            contentId,
+            moduleId: null,
+          },
+        })
+      );
+
+      await Promise.all(createPromises);
+    }
 
     revalidatePath(`/admin/products/${productId}/contents`);
     return { success: true };
@@ -160,17 +195,10 @@ export async function fetchProductWithContents(productId: string) {
   }
 
   try {
+    // Buscar o produto
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: {
-        contents: {
-          include: {
-            module: true,
-          },
-          orderBy: {
-            sortOrder: "asc",
-          },
-        },
         modules: {
           orderBy: {
             sortOrder: "asc",
@@ -188,7 +216,35 @@ export async function fetchProductWithContents(productId: string) {
       throw new Error("Produto não encontrado");
     }
 
-    return product;
+    // Buscar os relacionamentos ProductContent para este produto
+    const productContents = await prisma.productContent.findMany({
+      where: { productId },
+      include: {
+        content: true,
+        module: true,
+      },
+      orderBy: {
+        sortOrder: "asc",
+      },
+    });
+
+    // Transformar para o formato esperado pelo código existente
+    const transformedContents = productContents.map((pc) => ({
+      ...pc.content,
+      sortOrder: pc.sortOrder,
+      productId: pc.productId,
+      moduleId: pc.moduleId,
+      module: pc.module,
+      productContentId: pc.id,
+    }));
+
+    // Adicionar os conteúdos transformados ao objeto do produto
+    const productWithContents = {
+      ...product,
+      contents: transformedContents,
+    };
+
+    return productWithContents;
   } catch (error) {
     console.error("Erro ao buscar produto com conteúdos:", error);
     throw error;

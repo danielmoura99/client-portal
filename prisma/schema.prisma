@@ -44,7 +44,7 @@ model Product {
   updatedAt   DateTime    @updatedAt
   
   // Relações
-  contents    Content[]
+  contents    ProductContent[]
   modules     Module[]
   userProducts UserProduct[]
 }
@@ -58,10 +58,7 @@ model Content {
   sortOrder   Int      @default(0)
   
   // Relações
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  moduleId    String?
-  module      Module?  @relation(fields: [moduleId], references: [id])
+ productContents ProductContent[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -76,7 +73,7 @@ model Module {
   // Relações
   productId   String
   product     Product   @relation(fields: [productId], references: [id])
-  contents    Content[]
+  contents    ProductContent[]
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -148,4 +145,19 @@ model RequestResponse {
   message     String    @db.Text
   isFromAdmin Boolean   @default(false)
   createdAt   DateTime  @default(now())
+}
+
+model ProductContent {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  contentId   String
+  content     Content  @relation(fields: [contentId], references: [id])
+  moduleId    String?
+  module      Module?  @relation(fields: [moduleId], references: [id])
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([productId, contentId])
 }

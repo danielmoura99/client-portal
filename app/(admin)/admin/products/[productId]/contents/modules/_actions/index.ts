@@ -140,3 +140,51 @@ export async function deleteModule(moduleId: string, productId: string) {
     throw error;
   }
 }
+
+// Associar conteúdos a um módulo
+export async function assignContentsToModule(
+  moduleId: string,
+  contentIds: string[],
+  productId: string
+) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    throw new Error("Não autorizado");
+  }
+
+  try {
+    // Verificar se o módulo existe
+    const moduleItem = await prisma.module.findUnique({
+      where: { id: moduleId },
+    });
+
+    if (!moduleItem) {
+      throw new Error("Módulo não encontrado");
+    }
+
+    // Verificar se o módulo pertence ao produto
+    if (moduleItem.productId !== productId) {
+      throw new Error("O módulo não pertence a este produto");
+    }
+
+    // Atualizar os registros ProductContent para associar os conteúdos ao módulo
+    await prisma.productContent.updateMany({
+      where: {
+        contentId: {
+          in: contentIds,
+        },
+        productId,
+      },
+      data: {
+        moduleId,
+      },
+    });
+
+    revalidatePath(`/admin/products/${productId}/contents`);
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao associar conteúdos ao módulo:", error);
+    throw error;
+  }
+}
