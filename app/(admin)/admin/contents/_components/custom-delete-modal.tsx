@@ -64,12 +64,10 @@ export function CustomDeleteModal({
     try {
       setIsDeleting(true);
 
-      // Determinar a URL da API com base na opção selecionada
+      // Determinar a URL da API correta com base na opção selecionada
       const endpoint = deleteCompletelyChecked
         ? `/api/admin/contents/delete/${content.id}`
-        : productId && content.productContentId
-          ? `/api/admin/products/${productId}/contents/${content.productContentId}`
-          : `/api/admin/contents/delete/${content.id}`;
+        : `/api/admin/products/${productId}/contents/${content.productContentId || content.id}`;
 
       console.log("Enviando requisição DELETE para:", endpoint);
 
@@ -78,9 +76,22 @@ export function CustomDeleteModal({
         method: "DELETE",
       });
 
+      // Adicione este log para verificar a resposta completa
+      const responseText = await response.text();
+      console.log("Resposta da API:", responseText);
+
+      // Tente analisar a resposta como JSON, se possível
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (e) {
+        // Se não for JSON, use o texto como está
+        errorData = { message: responseText };
+      }
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao excluir conteúdo");
+        throw new Error(errorData.message || "Erro ao excluir conteúdo");
       }
 
       toast({
@@ -103,7 +114,7 @@ export function CustomDeleteModal({
         onDeleted(contentId);
       }, 100);
     } catch (error) {
-      console.error("Erro ao excluir conteúdo:", error);
+      console.error("Erro detalhado ao excluir conteúdo:", error);
       toast({
         title: "Erro",
         description:

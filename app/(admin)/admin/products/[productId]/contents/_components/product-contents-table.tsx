@@ -96,7 +96,13 @@ export default function ProductContentsTable({
   };
 
   const handleDeleteClick = (productContent: any) => {
-    setContentToDelete(productContent);
+    // Certifique-se de que o productContentId está sendo passado
+    setContentToDelete({
+      id: productContent.content.id,
+      title: productContent.content.title,
+      type: productContent.content.type,
+      productContentId: productContent.id, // ID da tabela intermediária
+    });
     setDeleteDialogOpen(true);
   };
 

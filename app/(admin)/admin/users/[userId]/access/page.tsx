@@ -9,9 +9,9 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 }
 
 export default async function UserAccessPage({ params }: PageProps) {
@@ -20,10 +20,10 @@ export default async function UserAccessPage({ params }: PageProps) {
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/admin");
   }
-
+  const resolvedParams = await params;
   // Buscar o usuário com seus produtos atribuídos
   const user = await prisma.user.findUnique({
-    where: { id: params.userId },
+    where: { id: resolvedParams.userId },
     select: {
       id: true,
       name: true,

@@ -2,14 +2,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -22,7 +14,7 @@ interface DeleteContentDialogProps {
     id: string;
     title: string;
     type: string;
-    productContentId?: string;
+    productContentId?: string; // ID da relação na tabela intermediária
   };
   productId?: string;
   onDeleted: (contentId: string) => void;
@@ -37,92 +29,94 @@ export function DeleteContentDialog({
 }: DeleteContentDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteCompletelyChecked, setDeleteCompletelyChecked] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(open);
 
-  // Sincronizar o estado local com a propriedade open
+  // Fechar o modal quando ESC é pressionado
   useEffect(() => {
-    setIsDialogOpen(open);
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isDeleting) {
+        onOpenChange(false);
+      }
+    };
+
+    if (open) {
+      window.addEventListener("keydown", handleEsc);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, [open, onOpenChange, isDeleting]);
+
+  // Prevenir scroll do body quando o modal está aberto
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
-  // Limpeza quando o componente é desmontado
-  useEffect(() => {
-    return () => {
-      // Garantir que qualquer manipulação do DOM seja revertida
-      document.body.style.overflow = "";
-
-      // Remover qualquer classe que possa ter sido adicionada ao body
-      document.body.classList.remove("overflow-hidden");
-
-      // Remover qualquer elemento de overlay que possa ter ficado
-      const overlays = document.querySelectorAll("[data-radix-overlay]");
-      overlays.forEach((overlay) => {
-        overlay.parentNode?.removeChild(overlay);
-      });
-
-      // Remover qualquer atributo aria que possa ter sido adicionado
-      document.body.removeAttribute("aria-hidden");
-    };
-  }, []);
-
   const handleDelete = async () => {
-    if (isDeleting) return; // Prevenir cliques duplos
-
     try {
       setIsDeleting(true);
 
-      // Determinar a URL da API correta
+      // Determinar a URL da API com base na opção selecionada
       const endpoint = deleteCompletelyChecked
         ? `/api/admin/contents/delete/${content.id}`
         : productId && content.productContentId
           ? `/api/admin/products/${productId}/contents/${content.productContentId}`
           : `/api/admin/contents/delete/${content.id}`;
 
-      console.log("Enviando DELETE para:", endpoint);
+      console.log("Enviando requisição DELETE para:", endpoint);
 
-      // Fazer a requisição
+      // Fazer a requisição para remover a associação ou excluir completamente o conteúdo
       const response = await fetch(endpoint, {
         method: "DELETE",
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao excluir conteúdo");
+      // Adicione este log para verificar a resposta completa
+      const responseText = await response.text();
+      console.log("Resposta da API:", responseText);
+
+      // Tente analisar a resposta como JSON, se possível
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (e) {
+        // Se não for JSON, use o texto como está
+        errorData = { message: responseText };
       }
 
-      // Exibir notificação de sucesso
+      if (!response.ok) {
+        throw new Error(errorData.message || "Erro ao excluir conteúdo");
+      }
+
       toast({
         title: deleteCompletelyChecked
           ? "Conteúdo excluído permanentemente"
           : "Conteúdo removido",
-        description: `O conteúdo ${content.title} foi ${deleteCompletelyChecked ? "excluído completamente" : "removido"}.`,
+        description: deleteCompletelyChecked
+          ? `O conteúdo ${content.title} foi excluído completamente do sistema.`
+          : `O conteúdo ${content.title} foi removido.`,
       });
 
-      // Salvar o ID antes de fechar o diálogo
+      // Importante: guardar o ID antes de fechar o modal
       const contentId = content.id;
 
-      // Forçar o fechamento do diálogo
-      setIsDialogOpen(false);
+      // Primeiro fechar o modal
       onOpenChange(false);
 
-      // SOLUÇÃO CRÍTICA: Restaurar o estado do DOM manualmente
-      document.body.style.overflow = "";
-      document.body.classList.remove("overflow-hidden");
-      document.body.removeAttribute("aria-hidden");
-
-      // Remover qualquer overlay persistente
+      // Depois notificar que foi excluído
       setTimeout(() => {
-        const overlays = document.querySelectorAll("[data-radix-overlay]");
-        overlays.forEach((overlay) => {
-          if (overlay.parentNode) {
-            overlay.parentNode.removeChild(overlay);
-          }
-        });
-
-        // Notificar o componente pai após limpar o DOM
         onDeleted(contentId);
       }, 100);
     } catch (error) {
-      console.error("Erro ao excluir conteúdo:", error);
+      console.error("Erro detalhado ao excluir conteúdo:", error);
       toast({
         title: "Erro",
         description:
@@ -134,40 +128,27 @@ export function DeleteContentDialog({
     }
   };
 
-  // Se o dialog não estiver aberto, não renderize nada
-  if (!isDialogOpen && !open) return null;
+  if (!open) return null;
 
   return (
-    <Dialog
-      open={isDialogOpen}
-      onOpenChange={(value) => {
-        // Não permitir fechar durante a exclusão
-        if (isDeleting && !value) return;
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/50 z-50"
+        onClick={() => !isDeleting && onOpenChange(false)}
+      />
 
-        // Atualizar estado local e notificar o pai
-        setIsDialogOpen(value);
-        onOpenChange(value);
-      }}
-    >
-      <DialogContent
-        onInteractOutside={(e) => {
-          // Prevenir o fechamento ao clicar fora durante a exclusão
-          if (isDeleting) {
-            e.preventDefault();
-          }
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle>Excluir Conteúdo</DialogTitle>
-          <DialogDescription>
-            {deleteCompletelyChecked
-              ? "Tem certeza que deseja excluir permanentemente o conteúdo"
-              : "Tem certeza que deseja remover o conteúdo"}{" "}
-            <strong>{content?.title || ""}</strong>?
-          </DialogDescription>
-        </DialogHeader>
+      {/* Modal */}
+      <div className="fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%] bg-background rounded-lg border shadow-lg p-6">
+        <h2 className="text-lg font-semibold mb-2">Remover Conteúdo</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          {deleteCompletelyChecked
+            ? "Tem certeza que deseja excluir permanentemente o conteúdo"
+            : "Tem certeza que deseja remover o conteúdo"}{" "}
+          <strong>{content.title}</strong>?
+        </p>
 
-        <div className="py-4">
+        <div className="mb-6">
           <div className="flex items-center space-x-2">
             <Checkbox
               id="delete-completely"
@@ -196,22 +177,15 @@ export function DeleteContentDialog({
           )}
         </div>
 
-        <DialogFooter>
+        <div className="flex justify-end gap-3">
           <Button
             variant="outline"
-            onClick={() => {
-              // Forçar restauração do overflow
-              document.body.style.overflow = "";
-              document.body.classList.remove("overflow-hidden");
-
-              // Fechar o diálogo
-              setIsDialogOpen(false);
-              onOpenChange(false);
-            }}
+            onClick={() => onOpenChange(false)}
             disabled={isDeleting}
           >
             Cancelar
           </Button>
+
           <Button
             variant="destructive"
             onClick={handleDelete}
@@ -228,8 +202,8 @@ export function DeleteContentDialog({
               "Remover"
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </>
   );
 }
