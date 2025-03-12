@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/(admin)/admin/contents/_components/content-table.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -33,24 +32,47 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DeleteContentDialog } from "./delete-content-dialog";
+import { CustomDeleteModal } from "./custom-delete-modal";
 
 interface ContentTableProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialContents: any[];
 }
 
 export default function ContentTable({ initialContents }: ContentTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [contents, setContents] = useState(initialContents);
+  const [tableKey, setTableKey] = useState(0); // Para forçar re-renderização
 
   // Estado para controlar o diálogo de exclusão
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [contentToDelete, setContentToDelete] = useState<any>(null);
+
+  // Importante: garantir a limpeza do DOM quando o componente é desmontado
+  useEffect(() => {
+    return () => {
+      // Garantir que o overflow do body seja restaurado
+      document.body.style.overflow = "";
+      document.body.classList.remove("overflow-hidden");
+      document.body.removeAttribute("aria-hidden");
+
+      // Remover qualquer overlay persistente
+      const overlays = document.querySelectorAll("[data-radix-overlay]");
+      overlays.forEach((overlay) => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      });
+    };
+  }, []);
 
   // Filtrar conteúdos com base na pesquisa
   const filteredContents = contents.filter(
     (content) =>
-      content.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      content.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       content.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       content.product?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -74,7 +96,7 @@ export default function ContentTable({ initialContents }: ContentTableProps) {
     }
   };
 
-  // Função para fazer download direto (opcional)
+  // Função para fazer download direto
   const handleDownload = async (contentId: string) => {
     try {
       window.open(`/api/contents/${contentId}`, "_blank");
@@ -83,13 +105,46 @@ export default function ContentTable({ initialContents }: ContentTableProps) {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDeleteClick = (content: any) => {
+    console.log("Preparando para excluir conteúdo:", content.id);
     setContentToDelete(content);
     setDeleteDialogOpen(true);
   };
 
+  // Função para tratar a exclusão de um conteúdo
+  const handleContentDeleted = (contentId: string) => {
+    console.log("Conteúdo excluído:", contentId);
+
+    // Forçar a limpeza de qualquer overlay ou modificação do DOM persistente
+    document.body.style.overflow = "";
+    document.body.classList.remove("overflow-hidden");
+    document.body.removeAttribute("aria-hidden");
+
+    const overlays = document.querySelectorAll("[data-radix-overlay]");
+    overlays.forEach((overlay) => {
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    });
+
+    // Atualizar a lista de conteúdos em uma operação separada
+    setTimeout(() => {
+      setContents((prevContents) =>
+        prevContents.filter((c) => c.id !== contentId)
+      );
+      setContentToDelete(null);
+      setDeleteDialogOpen(false);
+
+      // Forçar re-renderização após um curto delay
+      setTimeout(() => {
+        setTableKey((prevKey) => prevKey + 1);
+      }, 50);
+    }, 50);
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" key={tableKey}>
       <div className="flex items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-zinc-500" />
@@ -173,7 +228,7 @@ export default function ContentTable({ initialContents }: ContentTableProps) {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuItem asChild>
-                            <Link href={`/admin/contents/${content.id}`}>
+                            <Link href={`/admin/contents/edit/${content.id}`}>
                               <Edit className="h-4 w-4 mr-2" />
                               Editar
                             </Link>
@@ -197,9 +252,9 @@ export default function ContentTable({ initialContents }: ContentTableProps) {
         </Table>
       </div>
 
-      {/* Diálogo de exclusão */}
+      {/* Dialog de exclusão com manipulação explícita do DOM */}
       {contentToDelete && (
-        <DeleteContentDialog
+        <CustomDeleteModal
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           content={contentToDelete}
@@ -210,9 +265,7 @@ export default function ContentTable({ initialContents }: ContentTableProps) {
               ? contentToDelete.productContents[0].productId
               : undefined)
           }
-          onDeleted={(contentId) => {
-            setContents(contents.filter((c) => c.id !== contentId));
-          }}
+          onDeleted={handleContentDeleted}
         />
       )}
     </div>

@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { contentId: string } }
+  { params }: { params: Promise<{ contentId: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -17,8 +17,8 @@ export async function GET(
     if (!session?.user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-
-    const contentId = params.contentId;
+    const resolvedParams = await params;
+    const contentId = resolvedParams.contentId;
 
     // Buscar o conteúdo no banco de dados
     const content = await prisma.content.findUnique({

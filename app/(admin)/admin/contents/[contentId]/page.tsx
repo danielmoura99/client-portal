@@ -9,21 +9,20 @@ import { ChevronLeft } from "lucide-react";
 import { ContentForm } from "../_components/content-form";
 
 interface PageProps {
-  params: {
-    contentId: string;
-  };
+  params: Promise<{ [contentId: string]: string }>;
 }
 
 export default async function EditContentPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
+  const resolvedParams = await params;
 
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/admin");
   }
 
-  // Buscar o conteúdo com suas associações a produtos e módulos
+  // Buscar o conteúdo
   const content = await prisma.content.findUnique({
-    where: { id: params.contentId },
+    where: { id: resolvedParams.contentId },
     include: {
       productContents: {
         include: {
@@ -38,30 +37,23 @@ export default async function EditContentPage({ params }: PageProps) {
     notFound();
   }
 
-  // Buscar todos os produtos para o formulário
+  // Buscar produtos para o formulário
   const products = await prisma.product.findMany({
     orderBy: { name: "asc" },
   });
 
-  // Determinar o produto principal (usaremos o primeiro)
-  const primaryProductContent = content.productContents[0];
-  const primaryProductId = primaryProductContent?.productId;
+  // Determinar o produto principal
+  const primaryProductContent = content.productContents[0] || null;
+  const primaryProductId = primaryProductContent?.productId || "";
 
-  // Buscar todos os módulos associados aos produtos do conteúdo
-  const productIds = content.productContents.map((pc) => pc.productId);
+  // Buscar módulos relevantes
   const modules = await prisma.module.findMany({
-    where: {
-      productId: {
-        in: productIds,
-      },
-    },
+    where: primaryProductId ? { productId: primaryProductId } : undefined,
     orderBy: { title: "asc" },
   });
 
   // Determinar para onde voltar
-  const backUrl = primaryProductId
-    ? `/admin/products/${primaryProductId}/contents`
-    : "/admin/contents";
+  const backUrl = "/admin/contents";
 
   return (
     <div className="space-y-6">
@@ -69,8 +61,7 @@ export default async function EditContentPage({ params }: PageProps) {
         <Button asChild variant="ghost" size="sm" className="mb-2">
           <Link href={backUrl}>
             <ChevronLeft className="h-4 w-4 mr-1" />
-            Voltar para{" "}
-            {primaryProductId ? "Conteúdos do Produto" : "Conteúdos"}
+            Voltar para Conteúdos
           </Link>
         </Button>
         <h1 className="text-2xl font-bold text-white mb-2">Editar Conteúdo</h1>
@@ -84,11 +75,8 @@ export default async function EditContentPage({ params }: PageProps) {
           description: content.description || "",
           type: content.type,
           path: content.path,
-          // Usamos o primeiro produto associado como principal
-          productId: primaryProductId || "",
-          // Usamos o primeiro módulo associado, se existir
+          productId: primaryProductId,
           moduleId: primaryProductContent?.moduleId || "",
-          // Usamos a ordem do primeiro produto
           sortOrder: primaryProductContent?.sortOrder || 0,
         }}
         products={products}

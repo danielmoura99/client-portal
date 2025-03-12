@@ -179,9 +179,9 @@ export function ContentForm({
         formData.append("file", selectedFile);
       }
 
-      // Enviar para a API
+      // Enviar para a nova API
       const url = initialData
-        ? `/api/admin/contents/${initialData.id}`
+        ? `/api/admin/contents/update/${initialData.id}`
         : "/api/admin/contents";
 
       const response = await fetch(url, {

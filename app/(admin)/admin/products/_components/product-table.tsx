@@ -33,7 +33,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ProductType } from "@prisma/client";
-import { DeleteProductDialog } from "./delete-product-dialog";
+//import { DeleteProductDialog } from "./delete-product-dialog";
+import { CustomDeleteProductModal } from "./custom-delete-product-modal";
 
 interface ProductTableProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,6 +49,7 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
   // Estado para controlar o diálogo de exclusão
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<any>(null);
+  const [tableKey, setTableKey] = useState(0);
 
   // Filtrar produtos com base na pesquisa
   const filteredProducts = products.filter(
@@ -101,7 +103,7 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" key={tableKey}>
       <div className="flex items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-zinc-500" />
@@ -208,10 +210,19 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
 
       {/* Diálogo de exclusão */}
       {productToDelete && (
-        <DeleteProductDialog
+        <CustomDeleteProductModal
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           product={productToDelete}
+          onDeleted={() => {
+            // Use a função updater do setState para garantir que está atualizando
+            // com base no estado mais recente
+            setProducts((prevProducts) =>
+              prevProducts.filter((p) => p.id !== productToDelete.id)
+            );
+            // Forçar re-renderização se necessário
+            setTableKey((prevKey) => prevKey + 1);
+          }}
         />
       )}
     </div>

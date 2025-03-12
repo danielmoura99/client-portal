@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { DeleteContentDialog } from "./delete-content-dialog";
+import { DeleteContentDialog } from "@/app/(admin)/admin/contents/_components/delete-content-dialog";
 
 interface ProductContentsTableProps {
   initialContents: any[]; // ProductContent[]
@@ -205,7 +205,7 @@ export default function ProductContentsTable({
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
                             <DropdownMenuItem asChild>
-                              <Link href={`/admin/contents/${content.id}`}>
+                              <Link href={`/admin/contents/edit/${content.id}`}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Editar Conteúdo
                               </Link>
