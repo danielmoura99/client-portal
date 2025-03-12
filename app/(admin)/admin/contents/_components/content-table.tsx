@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/(admin)/admin/contents/_components/content-table.tsx
 "use client";
 
@@ -32,28 +33,30 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { formatDate } from "@/lib/utils";
+import { DeleteContentDialog } from "./delete-content-dialog";
 
 interface ContentTableProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialContents: any[];
 }
 
 export default function ContentTable({ initialContents }: ContentTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  // Remover setContents da destruturação para evitar o erro de variável não utilizada
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [contents, setContents] = useState(initialContents);
+
+  // Estado para controlar o diálogo de exclusão
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contentToDelete, setContentToDelete] = useState<any>(null);
 
   // Filtrar conteúdos com base na pesquisa
   const filteredContents = contents.filter(
     (content) =>
       content.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       content.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      content.product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      content.product?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Helper para ícones de tipo de conteúdo
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getContentTypeIcon = (type: string, path?: string) => {
     switch (type) {
       case "video":
@@ -78,6 +81,11 @@ export default function ContentTable({ initialContents }: ContentTableProps) {
     } catch (error) {
       console.error("Erro ao baixar arquivo:", error);
     }
+  };
+
+  const handleDeleteClick = (content: any) => {
+    setContentToDelete(content);
+    setDeleteDialogOpen(true);
   };
 
   return (
@@ -127,18 +135,22 @@ export default function ContentTable({ initialContents }: ContentTableProps) {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="bg-zinc-800/50">
-                      {getContentTypeIcon(content.type, content.path)}
-                      <span className="ml-1">{content.type}</span>
+                      {content.type}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-zinc-400">
-                    {content.product.name}
+                    {content.product
+                      ? content.product.name
+                      : content.productContents &&
+                          content.productContents.length > 0
+                        ? content.productContents[0].product.name
+                        : "-"}
                   </TableCell>
                   <TableCell className="text-zinc-400 truncate max-w-[200px]">
                     {content.path}
                   </TableCell>
                   <TableCell className="text-zinc-400">
-                    {formatDate(new Date(content.createdAt))}
+                    {new Date(content.createdAt).toLocaleString("pt-BR")}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end items-center">
@@ -167,7 +179,10 @@ export default function ContentTable({ initialContents }: ContentTableProps) {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-500 focus:text-red-500">
+                          <DropdownMenuItem
+                            className="text-red-500 focus:text-red-500"
+                            onClick={() => handleDeleteClick(content)}
+                          >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Excluir
                           </DropdownMenuItem>
@@ -181,6 +196,25 @@ export default function ContentTable({ initialContents }: ContentTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Diálogo de exclusão */}
+      {contentToDelete && (
+        <DeleteContentDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          content={contentToDelete}
+          productId={
+            contentToDelete.productId ||
+            (contentToDelete.productContents &&
+            contentToDelete.productContents.length > 0
+              ? contentToDelete.productContents[0].productId
+              : undefined)
+          }
+          onDeleted={(contentId) => {
+            setContents(contents.filter((c) => c.id !== contentId));
+          }}
+        />
+      )}
     </div>
   );
 }

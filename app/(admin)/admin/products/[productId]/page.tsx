@@ -9,13 +9,12 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 interface PageProps {
-  params: {
-    productId: string;
-  };
+  params: Promise<{ [productId: string]: string }>;
 }
 
 export default async function EditProductPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
+  const resolvedSearchParams = await params;
 
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/admin");
@@ -23,7 +22,7 @@ export default async function EditProductPage({ params }: PageProps) {
 
   // Buscar o produto
   const product = await prisma.product.findUnique({
-    where: { id: params.productId },
+    where: { id: resolvedSearchParams.productId },
   });
 
   if (!product) {

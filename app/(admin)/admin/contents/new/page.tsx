@@ -11,16 +11,16 @@ import { ContentForm } from "../_components/content-form";
 export default async function NewContentPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const session = await getServerSession(authOptions);
-
+  const resolvedSearchParams = await searchParams;
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/login");
   }
 
   // Obter o productId do parâmetro de consulta, se fornecido
-  const productId = searchParams.productId as string | undefined;
+  const productId = resolvedSearchParams.productId as string | undefined;
 
   // Buscar produtos para o seletor
   const products = await prisma.product.findMany({

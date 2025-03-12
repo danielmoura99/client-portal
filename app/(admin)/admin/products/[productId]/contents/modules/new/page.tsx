@@ -9,13 +9,12 @@ import { ChevronLeft } from "lucide-react";
 import { ModuleForm } from "../_components/module-form";
 
 interface PageProps {
-  params: {
-    productId: string;
-  };
+  params: Promise<{ [productId: string]: string }>;
 }
 
 export default async function NewModulePage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
+  const resolvedSearchParams = await params;
 
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/admin");
@@ -23,7 +22,7 @@ export default async function NewModulePage({ params }: PageProps) {
 
   // Buscar o produto
   const product = await prisma.product.findUnique({
-    where: { id: params.productId },
+    where: { id: resolvedSearchParams.productId },
   });
 
   if (!product) {
@@ -34,7 +33,9 @@ export default async function NewModulePage({ params }: PageProps) {
     <div className="space-y-6">
       <div>
         <Button asChild variant="ghost" size="sm" className="mb-2">
-          <Link href={`/admin/products/${params.productId}/contents`}>
+          <Link
+            href={`/admin/products/${resolvedSearchParams.productId}/contents`}
+          >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Voltar para Conteúdos
           </Link>
@@ -46,7 +47,7 @@ export default async function NewModulePage({ params }: PageProps) {
       </div>
 
       <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 max-w-md">
-        <ModuleForm productId={params.productId} />
+        <ModuleForm productId={resolvedSearchParams.productId} />
       </div>
     </div>
   );

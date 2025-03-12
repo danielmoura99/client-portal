@@ -15,14 +15,38 @@ export default async function AdminContentsPage() {
     redirect("/login");
   }
 
-  // Buscar todos os conteúdos com seus produtos relacionados
+  // Buscar todos os conteúdos com seus produtos relacionados através de productContents
   const contents = await prisma.content.findMany({
     include: {
-      product: true,
+      productContents: {
+        include: {
+          product: true,
+          module: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
     },
+  });
+
+  // Transformar os dados para manter compatibilidade com o componente ContentTable
+  const formattedContents = contents.map((content) => {
+    // Pegar o primeiro relacionamento de produto, se existir
+    const firstProductContent = content.productContents[0];
+
+    return {
+      ...content,
+      // Adicionar campos para compatibilidade com o componente atual
+      product: firstProductContent?.product || null,
+      module: firstProductContent?.module || null,
+      productId: firstProductContent?.productId || null,
+      moduleId: firstProductContent?.moduleId || null,
+      // Outros campos que possam ser necessários
+      _count: {
+        productContents: content.productContents.length,
+      },
+    };
   });
 
   return (
@@ -43,7 +67,7 @@ export default async function AdminContentsPage() {
         </Button>
       </div>
 
-      <ContentTable initialContents={contents} />
+      <ContentTable initialContents={formattedContents} />
     </div>
   );
 }

@@ -6,13 +6,12 @@ import { notFound, redirect } from "next/navigation";
 import ProductContentsClientPage from "./client-page";
 
 interface PageProps {
-  params: {
-    productId: string;
-  };
+  params: Promise<{ [productId: string]: string }>;
 }
 
 export default async function ProductContentsPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
+  const resolvedSearchParams = await params;
 
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/admin");
@@ -21,7 +20,7 @@ export default async function ProductContentsPage({ params }: PageProps) {
   try {
     // Buscar o produto com seus conteúdos usando as relações corretas conforme o schema
     const product = await prisma.product.findUnique({
-      where: { id: params.productId },
+      where: { id: resolvedSearchParams.productId },
     });
 
     if (!product) {
@@ -30,7 +29,7 @@ export default async function ProductContentsPage({ params }: PageProps) {
 
     // Buscar os módulos do produto
     const modules = await prisma.module.findMany({
-      where: { productId: params.productId },
+      where: { productId: resolvedSearchParams.productId },
       orderBy: { sortOrder: "asc" },
       include: {
         _count: {
@@ -41,7 +40,7 @@ export default async function ProductContentsPage({ params }: PageProps) {
 
     // Buscar os ProductContent para este produto, incluindo Content e Module
     const productContents = await prisma.productContent.findMany({
-      where: { productId: params.productId },
+      where: { productId: resolvedSearchParams.productId },
       include: {
         content: true,
         module: true,
@@ -66,7 +65,7 @@ export default async function ProductContentsPage({ params }: PageProps) {
 
     return (
       <ProductContentsClientPage
-        productId={params.productId}
+        productId={resolvedSearchParams.productId}
         initialProduct={formattedProduct}
       />
     );
