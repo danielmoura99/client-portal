@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/(admin)/admin/contents/_components/content-form.tsx
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -26,7 +27,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud } from "lucide-react";
+import { Loader2, UploadCloud, Trash } from "lucide-react";
+import { Img } from "@react-email/components";
 
 // Schema para validação do formulário
 const contentFormSchema = z.object({
@@ -44,17 +46,14 @@ const contentFormSchema = z.object({
   path: z.string().min(1, {
     message: "O caminho/URL do arquivo é obrigatório",
   }),
-  sortOrder: z.number().default(0),
-  // Não validamos o arquivo aqui, faremos isso no envio
+  sortOrder: z.coerce.number().default(0),
 });
 
 type ContentFormValues = z.infer<typeof contentFormSchema>;
 
 interface ContentFormProps {
-  initialData?: ContentFormValues & { id: string; sortOrder?: number };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialData?: ContentFormValues & { id: string };
   products: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   modules: any[];
   defaultProductId?: string;
   productContents?: {
@@ -69,9 +68,12 @@ export function ContentForm({
   products,
   modules,
   defaultProductId = "",
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  productContents = [],
 }: ContentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -107,11 +109,29 @@ export function ContentForm({
     (module) => module.productId === selectedProductId
   );
 
+  // Se for um arquivo de imagem, mostrar prévia
+  useEffect(() => {
+    if (initialData && initialData.path && !selectedFile) {
+      // Se for uma URL externa, verificar se é uma imagem
+      if (initialData.path.match(/\.(jpeg|jpg|gif|png)$/i)) {
+        setPreviewUrl(initialData.path);
+      }
+    }
+  }, [initialData]);
+
   // Manipular seleção de arquivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setSelectedFile(file);
+
+      // Criar URL para prévia, se for imagem
+      if (file.type.startsWith("image/")) {
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      } else {
+        setPreviewUrl(null);
+      }
 
       // Determinar o tipo com base na extensão
       const fileName = file.name.toLowerCase();
@@ -124,12 +144,18 @@ export function ContentForm({
       // Atualizar o formulário
       form.setValue("title", file.name.split(".")[0].replace(/_/g, " "));
       form.setValue("type", contentType);
-      form.setValue("path", `uploads/${selectedProductId}/${file.name}`);
+      form.setValue("path", `contents/${selectedProductId}/${file.name}`);
     }
   };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
+  };
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    // Não limpar o campo path, para manter o valor original em caso de edição
   };
 
   const onSubmit = async (values: ContentFormValues) => {
@@ -204,7 +230,13 @@ export function ContentForm({
                 <FormItem>
                   <FormLabel>Produto</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      // Limpar a seleção de módulo ao mudar de produto
+                      if (value !== field.value) {
+                        form.setValue("moduleId", "");
+                      }
+                      field.onChange(value);
+                    }}
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -244,12 +276,7 @@ export function ContentForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {/* Substitua esta linha */}
-                      {/* <SelectItem value="">Nenhum módulo</SelectItem> */}
-
-                      {/* Por esta linha */}
                       <SelectItem value="none">Nenhum módulo</SelectItem>
-
                       {filteredModules.map((moduleItem) => (
                         <SelectItem key={moduleItem.id} value={moduleItem.id}>
                           {moduleItem.title}
@@ -323,7 +350,26 @@ export function ContentForm({
                 className="hidden"
               />
 
-              <UploadCloud className="h-10 w-10 text-zinc-500" />
+              {previewUrl ? (
+                <div className="relative">
+                  <Img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="max-h-40 max-w-full rounded"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute -top-2 -right-2 rounded-full p-1"
+                    onClick={clearSelectedFile}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <UploadCloud className="h-10 w-10 text-zinc-500" />
+              )}
 
               <div className="text-center">
                 <p className="text-zinc-300">
@@ -334,13 +380,27 @@ export function ContentForm({
                     </>
                   ) : (
                     <>
-                      Arraste e solte ou{" "}
-                      <span
-                        className="text-blue-500 cursor-pointer"
-                        onClick={triggerFileInput}
-                      >
-                        selecione um arquivo
-                      </span>
+                      {initialData ? (
+                        <>
+                          Arquivo atual:{" "}
+                          <span className="font-medium">
+                            {initialData.path.split("/").pop()}
+                          </span>
+                          <span className="block mt-1 text-sm text-zinc-500">
+                            Clique abaixo para substituir
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          Arraste e solte ou{" "}
+                          <span
+                            className="text-blue-500 cursor-pointer"
+                            onClick={triggerFileInput}
+                          >
+                            selecione um arquivo
+                          </span>
+                        </>
+                      )}
                     </>
                   )}
                 </p>
@@ -349,12 +409,23 @@ export function ContentForm({
                 </p>
               </div>
 
+              {!selectedFile && initialData && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={triggerFileInput}
+                >
+                  {initialData ? "Substituir arquivo" : "Selecionar arquivo"}
+                </Button>
+              )}
+
               {selectedFile && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setSelectedFile(null)}
+                  onClick={clearSelectedFile}
                 >
                   Remover arquivo
                 </Button>
@@ -399,6 +470,25 @@ export function ContentForm({
                 </FormControl>
                 <FormDescription>
                   Descrição adicional do conteúdo
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Ordem */}
+          <FormField
+            control={form.control}
+            name="sortOrder"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ordem de exibição</FormLabel>
+                <FormControl>
+                  <Input type="number" min="0" step="1" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Ordem de exibição do conteúdo (números menores são exibidos
+                  primeiro)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
