@@ -7,24 +7,49 @@ import {
   checkUserAccess,
   getProductContents,
 } from "@/lib/services/access-control";
-import { ContentList } from "../../_components/content-list";
+import { CourseInterface } from "./_components/course-interface";
 
 interface CoursePageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
+  searchParams?: Promise<{
+    content?: string;
+  }>;
 }
 
-export default async function CoursePage({ params }: CoursePageProps) {
+export default async function CoursePage({
+  params,
+  searchParams,
+}: CoursePageProps) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     redirect("/login");
   }
-
+  const resolvedSearchParams = await searchParams;
+  const resolvedParams = await params;
   // Buscar o curso pelo slug
   const course = await prisma.product.findUnique({
-    where: { slug: params.slug },
+    where: { slug: resolvedParams.slug },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      type: true,
+      slug: true,
+      modules: {
+        orderBy: {
+          sortOrder: "asc",
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          sortOrder: true,
+        },
+      },
+    },
   });
 
   if (!course) {
@@ -33,7 +58,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
 
   // Verificar acesso do usuário ao curso
   const hasAccess = await checkUserAccess(session.user.id, {
-    productSlug: params.slug,
+    productSlug: resolvedParams.slug,
   });
 
   if (!hasAccess) {
@@ -41,38 +66,73 @@ export default async function CoursePage({ params }: CoursePageProps) {
   }
 
   // Buscar conteúdos do curso
-  const contents = await getProductContents(course.id);
+  const productContents = await getProductContents(course.id);
 
-  // Agrupar conteúdos por módulo
-  const moduleMap = new Map();
+  // Organizar os conteúdos por módulo
+  const modulesWithContents = course.modules.map((module) => {
+    const moduleContents = productContents
+      .filter((pc) => pc.moduleId === module.id)
+      .map((pc) => ({
+        id: pc.content.id,
+        title: pc.content.title,
+        type: pc.content.type,
+        path: pc.content.path,
+        description: pc.content.description,
+        sortOrder: pc.sortOrder,
+      }));
 
-  // Adicionar conteúdos sem módulo em um grupo "default"
-  const noModuleContents = contents.filter((content) => !content.moduleId);
-  if (noModuleContents.length > 0) {
-    moduleMap.set("default", {
+    return {
+      ...module,
+      contents: moduleContents,
+    };
+  });
+
+  // Adicionar conteúdos sem módulo
+  const contentsWithoutModule = productContents
+    .filter((pc) => !pc.moduleId)
+    .map((pc) => ({
+      id: pc.content.id,
+      title: pc.content.title,
+      type: pc.content.type,
+      path: pc.content.path,
+      description: pc.content.description,
+      sortOrder: pc.sortOrder,
+    }));
+
+  if (contentsWithoutModule.length > 0) {
+    modulesWithContents.push({
       id: "default",
       title: "Conteúdo Principal",
-      contents: noModuleContents,
+      description: "Materiais gerais do curso",
+      sortOrder: 9999,
+      contents: contentsWithoutModule,
     });
   }
 
-  // Agrupar o resto dos conteúdos por seus módulos
-  contents
-    .filter((content) => content.moduleId)
-    .forEach((content) => {
-      if (!moduleMap.has(content.moduleId)) {
-        moduleMap.set(content.moduleId, {
-          id: content.module?.id,
-          title: content.module?.title,
-          contents: [],
-        });
+  // Encontrar o conteúdo selecionado através do parâmetro content
+  let initialSelectedContent = null;
+  if (resolvedSearchParams?.content) {
+    // Procurar o conteúdo em todos os módulos
+    for (const moduleItem of modulesWithContents) {
+      const found = moduleItem.contents.find(
+        (c) => c.id === resolvedSearchParams.content
+      );
+      if (found) {
+        initialSelectedContent = found;
+        break;
       }
+    }
+  }
 
-      moduleMap.get(content.moduleId).contents.push(content);
-    });
-
-  // Converter o mapa em array para renderização
-  const modules = Array.from(moduleMap.values());
+  // Se não houver conteúdo selecionado, usar o primeiro disponível
+  if (!initialSelectedContent) {
+    for (const moduleItem of modulesWithContents) {
+      if (moduleItem.contents.length > 0) {
+        initialSelectedContent = moduleItem.contents[0];
+        break;
+      }
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -81,29 +141,14 @@ export default async function CoursePage({ params }: CoursePageProps) {
         <p className="text-zinc-400">{course.description}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Lista de conteúdos */}
-        <div className="md:col-span-1">
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
-            <h2 className="text-lg font-medium text-zinc-100 mb-4">
-              Conteúdo do Curso
-            </h2>
-
-            <ContentList modules={modules} />
-          </div>
-        </div>
-
-        {/* Área de visualização de conteúdo */}
-        <div className="md:col-span-2">
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 h-full">
-            <div className="flex items-center justify-center h-full">
-              <p className="text-zinc-400">
-                Selecione um conteúdo para começar a aprender.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Componente do cliente para lidar com a interatividade */}
+      <CourseInterface
+        courseId={course.id}
+        courseName={course.name}
+        courseSlug={course.slug}
+        modules={modulesWithContents}
+        initialSelectedContent={initialSelectedContent}
+      />
     </div>
   );
 }

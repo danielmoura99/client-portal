@@ -1,10 +1,16 @@
-// app/(portal)/educational/_components/content-viewer.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Loader2 } from "lucide-react";
+import {
+  Download,
+  FileText,
+  Loader2,
+  Video,
+  File,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface ContentViewerProps {
@@ -64,12 +70,34 @@ export function ContentViewer({ content }: ContentViewerProps) {
   };
 
   useEffect(() => {
-    // Simulação de carregamento
+    // Simular um breve tempo de carregamento para mostrar o indicador
     setIsLoading(true);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
+    return () => clearTimeout(timer);
   }, [content.id]);
+
+  // Helper para ícone do tipo de conteúdo
+  const getContentTypeIcon = () => {
+    switch (content.type) {
+      case "video":
+        return <Video className="h-12 w-12 text-blue-500" />;
+      case "file":
+        if (content.path.endsWith(".pdf")) {
+          return <FileText className="h-12 w-12 text-red-500" />;
+        } else if (
+          content.path.endsWith(".xlsx") ||
+          content.path.endsWith(".xls")
+        ) {
+          return <FileText className="h-12 w-12 text-green-500" />;
+        } else {
+          return <File className="h-12 w-12 text-zinc-500" />;
+        }
+      default:
+        return <File className="h-12 w-12 text-zinc-500" />;
+    }
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -96,10 +124,24 @@ export function ContentViewer({ content }: ContentViewerProps) {
         );
 
       case "file":
+        // Verificar se é um PDF que pode ser incorporado
+        if (content.path.endsWith(".pdf") && content.path.startsWith("http")) {
+          return (
+            <div className="aspect-video rounded-lg overflow-hidden">
+              <iframe
+                src={content.path}
+                className="w-full h-full"
+                title={content.title}
+              />
+            </div>
+          );
+        }
+
+        // Para outros tipos de arquivo, mostrar um botão de download
         return (
           <div className="flex flex-col items-center justify-center py-12 px-4 bg-zinc-800/50 rounded-lg">
-            <FileText className="h-16 w-16 text-blue-500 mb-4" />
-            <h3 className="text-lg font-medium text-zinc-100 mb-2">
+            {getContentTypeIcon()}
+            <h3 className="text-lg font-medium text-zinc-100 mt-4 mb-2">
               {content.title}
             </h3>
             {content.description && (
@@ -120,16 +162,35 @@ export function ContentViewer({ content }: ContentViewerProps) {
                 </>
               )}
             </Button>
+
+            {/* Mostrar o tipo e tamanho do arquivo, se disponível */}
+            <div className="mt-4 text-xs text-zinc-500 flex items-center">
+              <FileText className="h-3 w-3 mr-1" />
+              {content.path.split(".").pop()?.toUpperCase() || "Arquivo"}
+              {content.path.startsWith("http") && (
+                <span className="ml-2 flex items-center">
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Link externo
+                </span>
+              )}
+            </div>
           </div>
         );
 
       case "article":
         return (
-          <div className="prose prose-invert max-w-none prose-headings:text-zinc-100 prose-p:text-zinc-300 prose-a:text-blue-400">
-            {/* Aqui você poderia renderizar conteúdo markdown ou HTML */}
-            <h2>{content.title}</h2>
-            <p>{content.description}</p>
-            {/* Conteúdo do artigo seria carregado e renderizado aqui */}
+          <div className="prose prose-invert max-w-none prose-headings:text-zinc-100 prose-p:text-zinc-300 prose-a:text-blue-400 p-6">
+            <h2 className="text-xl font-semibold mb-4">{content.title}</h2>
+            <div className="mb-6">
+              {content.description && (
+                <p className="text-zinc-400">{content.description}</p>
+              )}
+            </div>
+            <div className="bg-zinc-800/40 p-6 rounded-lg">
+              <p className="text-zinc-300">
+                O conteúdo deste artigo será carregado aqui...
+              </p>
+            </div>
           </div>
         );
 

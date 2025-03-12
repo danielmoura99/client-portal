@@ -35,5 +35,50 @@ export default async function CoursesPage() {
     take: 3,
   });
 
-  return <div className="p-6 space-y-6"> EM DESENVOLVIMENTO</div>;
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold text-zinc-100">Meus Cursos</h1>
+        <p className="text-zinc-400">
+          Acesse os cursos disponíveis em sua conta
+        </p>
+      </div>
+
+      {courses.length === 0 ? (
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6">
+          <h2 className="text-lg font-medium text-zinc-100 mb-2">
+            Você ainda não possui cursos
+          </h2>
+          <p className="text-zinc-400">
+            Adquira um de nossos cursos para acelerar seu desenvolvimento como
+            trader.
+          </p>
+
+          {availableCourses.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-md font-medium text-zinc-100 mb-4">
+                Cursos disponíveis para você:
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {availableCourses.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    isPurchased={false}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {courses.map((course) => (
+            <CourseCard key={course.id} course={course} isPurchased={true} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
