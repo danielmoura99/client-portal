@@ -29,9 +29,10 @@ export default function EducationalPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-zinc-100">Educacional</h1>
+        <h1 className="text-2xl font-bold text-zinc-100">Tutoriais</h1>
         <p className="text-zinc-400">
-          Aqui você tem acesso a vídeos educacionais.
+          Aqui você tem acesso a vídeos informativos, explicando o funcionamento
+          da mesa propietária.
         </p>
       </div>
 

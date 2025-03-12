@@ -61,10 +61,10 @@ const data = {
           title: "Cursos",
           url: "/educational/cursos",
         },
-        {
-          title: "Planilha de Aprovação",
-          url: "/educational/planilha-aprovacao",
-        },
+        //{
+        //   title: "Planilha de Aprovação",
+        //   url: "/educational/planilha-aprovacao",
+        // },
       ],
     },
   ],

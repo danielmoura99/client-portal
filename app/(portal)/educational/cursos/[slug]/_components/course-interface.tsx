@@ -59,7 +59,7 @@ export function CourseInterface({
     modules.reduce(
       (acc, module) => ({
         ...acc,
-        [module.id]: true,
+        [module.id]: false,
       }),
       {}
     )
