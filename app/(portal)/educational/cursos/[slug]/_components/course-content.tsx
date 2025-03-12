@@ -39,7 +39,6 @@ interface CourseContentProps {
   modules: Module[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function CourseContent({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   courseId,

@@ -117,7 +117,7 @@ export function ContentForm({
         setPreviewUrl(initialData.path);
       }
     }
-  }, [initialData]);
+  }, [initialData, selectedFile]);
 
   // Manipular seleção de arquivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

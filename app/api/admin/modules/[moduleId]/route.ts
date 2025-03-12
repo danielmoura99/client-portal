@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { moduleId: string } }
+  { params }: { params: Promise<{ moduleId: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -14,8 +14,8 @@ export async function DELETE(
     if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
-
-    const moduleId = params.moduleId;
+    const resolvedparams = await params;
+    const moduleId = resolvedparams.moduleId;
 
     // Verificar se o módulo existe
     const moduleItem = await prisma.module.findUnique({
@@ -36,7 +36,7 @@ export async function DELETE(
 
     // Se houver conteúdos associados, remover a associação
     if (moduleItem._count.contents > 0) {
-      await prisma.content.updateMany({
+      await prisma.productContent.updateMany({
         where: { moduleId },
         data: { moduleId: null },
       });

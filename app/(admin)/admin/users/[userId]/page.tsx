@@ -9,21 +9,21 @@ import { ChevronLeft } from "lucide-react";
 import { UserForm } from "./_components/user-form";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 }
 
 export default async function EditUserPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
-
+  const resolvedParams = await params;
   if (!session?.user || session.user.role !== "ADMIN") {
     redirect("/admin");
   }
 
   // Buscar o usuário
   const user = await prisma.user.findUnique({
-    where: { id: params.userId },
+    where: { id: resolvedParams.userId },
     select: {
       id: true,
       name: true,

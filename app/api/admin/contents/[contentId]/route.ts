@@ -25,17 +25,17 @@ async function saveFile(file: File, destPath: string): Promise<string> {
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { contentId: string } }
+  { params }: { params: Promise<{ contentId: string }> }
 ) {
   // Verificar autenticação
   const session = await getServerSession(authOptions);
-
+  const resolvedParams = await params;
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   try {
-    const contentId = params.contentId;
+    const contentId = resolvedParams.contentId;
 
     // Verificar se o conteúdo existe
     const existingContent = await prisma.content.findUnique({
@@ -156,7 +156,7 @@ export async function PUT(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { contentId: string } }
+  { params }: { params: Promise<{ contentId: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -164,8 +164,8 @@ export async function GET(
     if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
-
-    const contentId = params.contentId;
+    const resolvedParams = await params;
+    const contentId = resolvedParams.contentId;
 
     // Buscar o conteúdo com suas associações de produtos
     const content = await prisma.content.findUnique({

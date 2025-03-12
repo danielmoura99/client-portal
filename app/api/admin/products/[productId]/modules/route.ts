@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -14,8 +14,8 @@ export async function GET(
     if (!session?.user || session.user.role !== "ADMIN") {
       return Response.json({ error: "Não autorizado" }, { status: 401 });
     }
-
-    const productId = params.productId;
+    const resolvedparams = await params;
+    const productId = resolvedparams.productId;
 
     // Verificar se o produto existe
     const product = await prisma.product.findUnique({

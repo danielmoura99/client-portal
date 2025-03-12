@@ -34,7 +34,6 @@ const statusMap = {
 };
 
 interface RequestItemProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   request: any;
   onUpdate: () => Promise<void>;
 }

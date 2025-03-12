@@ -37,13 +37,11 @@ import { ProductType } from "@prisma/client";
 import { CustomDeleteProductModal } from "./custom-delete-product-modal";
 
 interface ProductTableProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialProducts: any[];
 }
 
 export default function ProductTable({ initialProducts }: ProductTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [products, setProducts] = useState(initialProducts);
 
   // Estado para controlar o diálogo de exclusão

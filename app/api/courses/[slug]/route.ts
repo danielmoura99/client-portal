@@ -7,7 +7,7 @@ import { checkUserAccess } from "@/lib/services/access-control";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -15,8 +15,8 @@ export async function GET(
     if (!session?.user) {
       return Response.json({ error: "Não autorizado" }, { status: 401 });
     }
-
-    const slug = params.slug;
+    const resolvedparams = await params;
+    const slug = resolvedparams.slug;
 
     // Buscar o curso pelo slug
     const course = await prisma.product.findUnique({

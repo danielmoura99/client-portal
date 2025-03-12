@@ -6,9 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { checkUserAccess } from "@/lib/services/access-control";
 
 interface ContentPageProps {
-  params: {
+  params: Promise<{
     contentId: string;
-  };
+  }>;
 }
 
 export default async function ContentRedirectPage({
@@ -19,10 +19,10 @@ export default async function ContentRedirectPage({
   if (!session?.user) {
     redirect("/login");
   }
-
+  const resolvedParams = await params;
   // Buscar o conteúdo solicitado com seu relacionamento ao produto através da tabela ProductContent
   const contentWithProductRelation = await prisma.content.findUnique({
-    where: { id: params.contentId },
+    where: { id: resolvedParams.contentId },
     include: {
       productContents: {
         include: {
@@ -46,7 +46,7 @@ export default async function ContentRedirectPage({
 
   // Verificar acesso do usuário ao conteúdo
   const hasAccess = await checkUserAccess(session.user.id, {
-    contentId: params.contentId,
+    contentId: resolvedParams.contentId,
   });
 
   if (!hasAccess) {
@@ -54,5 +54,7 @@ export default async function ContentRedirectPage({
   }
 
   // Redirecionar para a página do curso com o conteúdo específico
-  redirect(`/educational/cursos/${product.slug}?content=${params.contentId}`);
+  redirect(
+    `/educational/cursos/${product.slug}?content=${resolvedParams.contentId}`
+  );
 }

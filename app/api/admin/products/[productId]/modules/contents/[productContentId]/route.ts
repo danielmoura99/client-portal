@@ -7,7 +7,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { productId: string; productContentId: string } }
+  {
+    params,
+  }: { params: Promise<{ productId: string; productContentId: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -15,8 +17,8 @@ export async function DELETE(
     if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
-
-    const { productId, productContentId } = params;
+    const resolvedparams = await params;
+    const { productId, productContentId } = resolvedparams;
 
     console.log(
       `Recebida solicitação para excluir: productId=${productId}, productContentId=${productContentId}`

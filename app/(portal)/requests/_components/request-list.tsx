@@ -63,6 +63,7 @@ export function RequestList() {
 
   useEffect(() => {
     loadRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStatus]);
 
   const formatDate = (date: string) => {

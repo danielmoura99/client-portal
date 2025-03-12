@@ -4,8 +4,8 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { checkUserAccess } from "@/lib/services/access-control";
-import { ToolCard } from "../_components/tool-card";
-import { Button } from "@/components/ui/button";
+//import { ToolCard } from "../_components/tool-card";
+//import { Button } from "@/components/ui/button";
 
 export default async function PlanilhaAprovacaoPage() {
   const session = await getServerSession(authOptions);
@@ -27,7 +27,7 @@ export default async function PlanilhaAprovacaoPage() {
     },
     include: {
       contents: {
-        where: { type: "file" },
+        where: {},
       },
     },
   });
