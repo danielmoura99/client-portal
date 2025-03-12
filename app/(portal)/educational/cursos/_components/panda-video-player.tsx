@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface PandaVideoPlayerProps {
   embedUrl: string;
@@ -10,135 +10,116 @@ interface PandaVideoPlayerProps {
 }
 
 export function PandaVideoPlayer({ embedUrl, title }: PandaVideoPlayerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // Gerar um ID único para o container do player
-  const containerId = useRef(
-    `panda-player-${Math.random().toString(36).substring(2, 9)}`
-  ).current;
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    // Reset estados ao mudar de vídeo
     setIsLoading(true);
-    setError(null);
+    setHasError(false);
 
-    // Função para processar e validar a URL do embed
-    const processEmbedUrl = () => {
-      // Se a URL já estiver completa com iframe src
-      if (embedUrl.includes("src=")) {
-        try {
-          const srcMatch = embedUrl.match(/src="([^"]+)"/);
-          if (srcMatch && srcMatch[1]) {
-            return srcMatch[1];
-          }
-        } catch (e) {
-          console.error("Erro ao extrair URL do embed:", e);
-        }
-      }
-
-      // Se for apenas o ID do vídeo, construir URL completa
-      if (embedUrl.match(/^[a-zA-Z0-9-]+$/)) {
-        return `https://player-vz-7b362a62-4f9.tv.pandavideo.com.br/embed/?v=${embedUrl}`;
-      }
-
-      // Se for uma URL completa, usá-la diretamente
-      return embedUrl;
-    };
-
-    // Verificar se a URL é válida para Panda Video
-    const validateUrl = (url: string) => {
-      return (
-        url &&
-        (url.includes("pandavideo.com") ||
-          url.includes("panda-") ||
-          url.includes("player-vz"))
-      );
-    };
-
-    try {
-      const processedUrl = processEmbedUrl();
-
-      if (!validateUrl(processedUrl)) {
-        setError("URL de vídeo inválida ou não suportada");
-        setIsLoading(false);
-        return;
-      }
-
-      // Função para lidar com a carga do iframe
-      const handleIframeLoad = () => {
-        setIsLoading(false);
-      };
-
-      // Função para lidar com erros do iframe
-      const handleIframeError = () => {
-        setError("Não foi possível carregar o vídeo");
-        setIsLoading(false);
-      };
-
-      // Adicionar os event listeners
-      const iframe = iframeRef.current;
-      if (iframe) {
-        iframe.addEventListener("load", handleIframeLoad);
-        iframe.addEventListener("error", handleIframeError);
-
-        // Atualizar a URL do iframe
-        iframe.src = processedUrl;
-      }
-
-      // Limpar os event listeners ao desmontar ou quando a URL mudar
-      return () => {
-        if (iframe) {
-          iframe.removeEventListener("load", handleIframeLoad);
-          iframe.removeEventListener("error", handleIframeError);
-        }
-      };
-    } catch (err) {
-      console.error("Erro ao configurar player de vídeo:", err);
-      setError("Erro ao configurar o player de vídeo");
+    // Listener para monitorar carregamento do iframe
+    const handleIframeLoad = () => {
       setIsLoading(false);
+    };
+
+    // Listener para monitorar erros do iframe
+    const handleIframeError = () => {
+      setIsLoading(false);
+      setHasError(true);
+    };
+
+    // Timeout para evitar carregamento infinito
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        setIsLoading(false);
+        setHasError(true);
+      }
+    }, 15000);
+
+    // Buscar o iframe após renderização
+    const iframe = containerRef.current?.querySelector("iframe");
+    if (iframe) {
+      iframe.addEventListener("load", handleIframeLoad);
+      iframe.addEventListener("error", handleIframeError);
     }
-  }, [embedUrl, containerId]);
 
-  // Componente para exibir mensagem de erro
-  const ErrorDisplay = ({ message }: { message: string }) => (
-    <div className="aspect-video flex items-center justify-center bg-zinc-800 rounded-lg">
-      <div className="text-center p-6">
-        <div className="bg-red-500/20 text-red-300 p-3 rounded-lg inline-block mb-4">
-          <AlertCircle className="h-8 w-8" />
-        </div>
-        <h3 className="text-lg font-medium text-zinc-100 mb-2">
-          Não foi possível carregar o vídeo
-        </h3>
-        <p className="text-zinc-400">{message}</p>
-      </div>
-    </div>
-  );
-
-  // Se houver um erro, mostrar mensagem
-  if (error) {
-    return <ErrorDisplay message={error} />;
-  }
+    return () => {
+      clearTimeout(timeout);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const iframe = containerRef.current?.querySelector("iframe");
+      if (iframe) {
+        iframe.removeEventListener("load", handleIframeLoad);
+        iframe.removeEventListener("error", handleIframeError);
+      }
+    };
+  }, [embedUrl, isLoading]);
 
   return (
-    <div
-      className="relative aspect-video bg-zinc-900 rounded-lg overflow-hidden"
-      id={containerId}
-    >
+    <div className="relative" ref={containerRef}>
+      {/* Se estiver carregando, mostrar um loader */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 z-10">
-          <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/80 z-10">
+          <div className="text-center">
+            <Loader2 className="h-10 w-10 text-blue-500 animate-spin mx-auto mb-4" />
+            <p className="text-zinc-400">Carregando vídeo...</p>
+          </div>
         </div>
       )}
 
-      <iframe
-        ref={iframeRef}
-        className="absolute inset-0 w-full h-full"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        title={title || "Vídeo"}
-      />
+      {/* Se houver erro, mostrar uma mensagem */}
+      {hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/80 z-10">
+          <div className="text-center p-6">
+            <p className="text-red-500 font-medium mb-2">
+              Erro ao carregar o vídeo
+            </p>
+            <p className="text-zinc-400 mb-4">
+              Não foi possível carregar o conteúdo. Verifique sua conexão e
+              tente novamente.
+            </p>
+            <button
+              onClick={() => {
+                setIsLoading(true);
+                setHasError(false);
+                // Forçar o recarregamento do iframe
+                const container = containerRef.current;
+                if (container) {
+                  const oldIframe = container.querySelector("iframe");
+                  if (oldIframe) {
+                    const newIframe = oldIframe.cloneNode(
+                      true
+                    ) as HTMLIFrameElement;
+                    oldIframe.parentNode?.replaceChild(newIframe, oldIframe);
+                  }
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Container do vídeo com proporção 16:9 */}
+      <div className="aspect-video rounded-lg overflow-hidden">
+        <iframe
+          src={embedUrl}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title={title || "Vídeo"}
+        />
+      </div>
+
+      {/* Título do vídeo, se fornecido */}
+      {title && (
+        <div className="p-4">
+          <h3 className="text-lg font-medium text-zinc-100">{title}</h3>
+        </div>
+      )}
     </div>
   );
 }
