@@ -7,7 +7,7 @@ import { put, del } from "@vercel/blob";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { contentId: string } }
+  { params }: { params: Promise<{ contentId: string }> }
 ) {
   // Verificar autenticação
   const session = await getServerSession(authOptions);
@@ -17,7 +17,8 @@ export async function PUT(
   }
 
   try {
-    const contentId = params.contentId;
+    const resolvedParams = await params;
+    const contentId = resolvedParams.contentId;
 
     // Verificar se o conteúdo existe
     const existingContent = await prisma.content.findUnique({
