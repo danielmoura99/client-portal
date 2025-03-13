@@ -124,23 +124,55 @@ export function CourseInterface({
         throw new Error("Erro ao baixar arquivo");
       }
 
-      const blob = await response.blob();
-      const filename = selectedContent?.path.split("/").pop() || "download";
+      // Verificamos o tipo de resposta
+      const contentType = response.headers.get("content-type");
 
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
+      // Se for um redirecionamento (para Vercel Blob)
+      if (response.redirected) {
+        // Abrimos a URL do Vercel Blob em uma nova aba
+        window.open(response.url, "_blank");
 
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(link);
+        toast({
+          title: "Download iniciado",
+          description: "O arquivo está sendo baixado diretamente do servidor.",
+        });
+      }
+      // Se for um arquivo no formato blob (arquivos menores ou outros servidores)
+      else if (contentType && !contentType.includes("application/json")) {
+        const blob = await response.blob();
+        const filename = selectedContent?.path.split("/").pop() || "download";
 
-      toast({
-        title: "Download concluído",
-        description: `O arquivo ${filename} foi baixado com sucesso.`,
-      });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+
+        toast({
+          title: "Download concluído",
+          description: `O arquivo ${filename} foi baixado com sucesso.`,
+        });
+      }
+      // Se for um JSON com URL (outra forma de servir arquivos do Vercel Blob)
+      else {
+        const data = await response.json();
+
+        if (data.url) {
+          window.open(data.url, "_blank");
+
+          toast({
+            title: "Download iniciado",
+            description:
+              "O arquivo está sendo baixado diretamente do servidor.",
+          });
+        } else {
+          throw new Error("Formato de resposta não reconhecido");
+        }
+      }
     } catch (error) {
       console.error("Erro ao baixar arquivo:", error);
       toast({

@@ -1,7 +1,5 @@
 // app/api/contents/[contentId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { checkUserAccess } from "@/lib/services/access-control";
@@ -36,51 +34,21 @@ export async function GET(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    // Se o conteúdo for um arquivo para download
-    if (content.type === "file") {
-      const filePath = content.path;
-      const fullPath = path.join(process.cwd(), "contents", filePath);
+    // Se o conteúdo for um arquivo para download com URL do Vercel Blob
+    if (content.type === "file" && content.path.includes("vercel-blob.com")) {
+      // Extraímos o nome do arquivo da URL ou do título
+      const filename =
+        content.path.split("/").pop() ||
+        content.title.replace(/\s+/g, "_") + ".file";
 
-      // Verificação de segurança
-      const contentsDir = path.join(process.cwd(), "contents");
-      if (!fullPath.startsWith(contentsDir)) {
-        return new NextResponse("Forbidden", { status: 403 });
-      }
+      // Adicionamos o parâmetro de download com o nome do arquivo
+      const downloadUrl = new URL(content.path);
+      downloadUrl.searchParams.append("download", filename);
 
-      // Verificar se o arquivo existe
-      try {
-        await fs.promises.access(fullPath);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
-        console.error(`File not found: ${fullPath}`);
-        return new NextResponse("File not found", { status: 404 });
-      }
-
-      // Ler o arquivo
-      const fileBuffer = await fs.promises.readFile(fullPath);
-
-      // Determinar o tipo de conteúdo
-      let contentType = "application/octet-stream";
-      if (fullPath.endsWith(".xlsx")) {
-        contentType =
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-      } else if (fullPath.endsWith(".pdf")) {
-        contentType = "application/pdf";
-      } else if (fullPath.endsWith(".doc") || fullPath.endsWith(".docx")) {
-        contentType = "application/msword";
-      }
-
-      // Nome do arquivo para download
-      const filename = path.basename(fullPath);
-
-      // Configurar headers para download
-      const headers = new Headers();
-      headers.set("Content-Type", contentType);
-      headers.set("Content-Disposition", `attachment; filename=${filename}`);
-
-      return new NextResponse(fileBuffer, { headers });
+      // Redirecionar para a URL do Vercel Blob com o parâmetro de download
+      return NextResponse.redirect(downloadUrl.toString());
     }
-    // Se for outro tipo de conteúdo (URLs, etc.)
+    // Para outros tipos de conteúdo (URLs, etc.)
     else {
       return NextResponse.json(content);
     }
