@@ -1,15 +1,13 @@
 // app/api/admin/contents/delete/[contentId]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
-import fs from "fs";
-import path from "path";
+import { del } from "@vercel/blob";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ contentId: string }> }
+  { params }: { params: { contentId: string } }
 ) {
   try {
     // Verificar autenticação
@@ -17,8 +15,8 @@ export async function DELETE(
     if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
-    const resolvedParams = await params;
-    const contentId = resolvedParams.contentId;
+
+    const contentId = params.contentId;
 
     // Buscar o conteúdo no banco de dados
     const content = await prisma.content.findUnique({
@@ -35,21 +33,14 @@ export async function DELETE(
       );
     }
 
-    // Se o conteúdo for um arquivo local, excluir do sistema de arquivos
-    if (content.type === "file" && !content.path.startsWith("http")) {
+    // Se o conteúdo for um arquivo no Vercel Blob, excluí-lo
+    if (content.type === "file" && content.path.includes("vercel-blob.com")) {
       try {
-        // Construir caminho completo do arquivo
-        const fullPath = path.join(process.cwd(), content.path);
-
-        // Verificar se o arquivo existe
-        if (fs.existsSync(fullPath)) {
-          // Excluir o arquivo
-          fs.unlinkSync(fullPath);
-          console.log(`Arquivo excluído: ${fullPath}`);
-        }
-      } catch (fsError) {
-        console.error("Erro ao excluir arquivo:", fsError);
-        // Continuamos mesmo se houver erro no sistema de arquivos
+        await del(content.path);
+        console.log(`Arquivo excluído do Vercel Blob: ${content.path}`);
+      } catch (deleteError) {
+        console.error("Erro ao excluir arquivo do Vercel Blob:", deleteError);
+        // Continuamos mesmo se houver erro na exclusão do blob
       }
     }
 

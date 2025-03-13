@@ -1,32 +1,13 @@
 // app/api/admin/contents/update/[contentId]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
-import fs from "fs";
-import path from "path";
-import { mkdir } from "fs/promises";
-
-// Função auxiliar para salvar arquivo
-async function saveFile(file: File, destPath: string): Promise<string> {
-  // Garantir que o diretório existe
-  const dir = path.dirname(destPath);
-  await mkdir(dir, { recursive: true });
-
-  // Ler o arquivo como um array de bytes
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-
-  // Escrever o arquivo no sistema
-  await fs.promises.writeFile(destPath, buffer);
-
-  return destPath;
-}
+import { put, del } from "@vercel/blob";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ contentId: string }> }
+  { params }: { params: { contentId: string } }
 ) {
   // Verificar autenticação
   const session = await getServerSession(authOptions);
@@ -36,8 +17,7 @@ export async function PUT(
   }
 
   try {
-    const resolvedParams = await params;
-    const contentId = resolvedParams.contentId;
+    const contentId = params.contentId;
 
     // Verificar se o conteúdo existe
     const existingContent = await prisma.content.findUnique({
@@ -80,19 +60,32 @@ export async function PUT(
     const file = formData.get("file") as File | null;
 
     if (file) {
-      // Criar estrutura de diretório
-      const baseDir = process.env.CONTENTS_DIR || "contents";
+      // Criar um nome de arquivo estruturado
+      const fileName = `contents/${productId}/${file.name}`;
 
-      // Garantir que o caminho está no formato esperado
-      if (!filePath || !filePath.startsWith(baseDir)) {
-        filePath = `${baseDir}/${productId}/${file.name}`;
+      // Se o arquivo antigo era do Vercel Blob, excluí-lo
+      if (
+        existingContent.path &&
+        existingContent.path.includes("vercel-blob.com")
+      ) {
+        try {
+          await del(existingContent.path);
+        } catch (deleteError) {
+          console.warn(
+            "Aviso: Não foi possível excluir o blob antigo:",
+            deleteError
+          );
+          // Continuamos mesmo se a exclusão falhar
+        }
       }
 
-      // Caminho absoluto para salvar o arquivo
-      const absolutePath = path.join(process.cwd(), filePath);
+      // Upload para Vercel Blob
+      const { url } = await put(fileName, file, {
+        access: "public",
+      });
 
-      // Salvar o arquivo
-      await saveFile(file, absolutePath);
+      // Atualizar o caminho para a URL do blob
+      filePath = url;
     }
 
     // Transação para atualizar conteúdo e associação de produto
