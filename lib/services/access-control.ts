@@ -27,22 +27,24 @@ export async function checkUserAccess(
     select: { role: true },
   });
 
-  if (user?.role === "ADMIN") {
+  if (user?.role === "ADMIN" || user?.role === "SUPPORT") {
     return true;
   }
 
   // Verificação baseada em contentId específico
   if (options.contentId) {
-    // Alterado para verificar através de ProductContent
-    const productContent = await prisma.productContent.findFirst({
+    // 1. Verificar se o usuário tem acesso através de algum ProductContent
+    const hasAccess = await prisma.content.findFirst({
       where: {
-        contentId: options.contentId,
-        product: {
-          userProducts: {
-            some: {
-              userId: userId,
-              expiresAt: {
-                gte: new Date(),
+        id: options.contentId,
+        productContents: {
+          some: {
+            product: {
+              userProducts: {
+                some: {
+                  userId,
+                  OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+                },
               },
             },
           },
@@ -50,9 +52,7 @@ export async function checkUserAccess(
       },
     });
 
-    if (productContent) return true;
-
-    return false;
+    if (hasAccess) return true;
   }
 
   // Verificação baseada em slug do produto
@@ -63,19 +63,15 @@ export async function checkUserAccess(
 
     if (!product) return false;
 
-    const userProduct = await prisma.userProduct.findUnique({
+    const userProduct = await prisma.userProduct.findFirst({
       where: {
-        userId_productId: {
-          userId: userId,
-          productId: product.id,
-        },
+        userId,
+        productId: product.id,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
     });
 
-    if (
-      userProduct &&
-      (!userProduct.expiresAt || userProduct.expiresAt > new Date())
-    ) {
+    if (userProduct) {
       return true;
     }
   }
@@ -91,7 +87,7 @@ export async function checkUserAccess(
     // Buscar produtos do usuário que não expiraram
     const userProducts = await prisma.userProduct.findMany({
       where: {
-        userId: userId,
+        userId,
         OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
       include: {

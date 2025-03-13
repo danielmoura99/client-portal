@@ -118,17 +118,29 @@ export function CourseInterface({
   const handleDownload = async (contentId: string) => {
     try {
       setIsDownloading(true);
+      console.log("Iniciando download do conteúdo ID:", contentId);
+
       const response = await fetch(`/api/contents/${contentId}`);
+      console.log("Resposta recebida:", {
+        ok: response.ok,
+        status: response.status,
+        redirected: response.redirected,
+        redirectUrl: response.redirected ? response.url : null,
+        contentType: response.headers.get("content-type"),
+      });
 
       if (!response.ok) {
-        throw new Error("Erro ao baixar arquivo");
+        console.error("Resposta não OK:", response.status, response.statusText);
+        throw new Error(`Erro ao baixar arquivo: Status ${response.status}`);
       }
 
       // Verificamos o tipo de resposta
       const contentType = response.headers.get("content-type");
+      console.log("Tipo de conteúdo:", contentType);
 
       // Se for um redirecionamento (para Vercel Blob)
       if (response.redirected) {
+        console.log("Redirecionamento detectado para:", response.url);
         // Abrimos a URL do Vercel Blob em uma nova aba
         window.open(response.url, "_blank");
 
@@ -139,10 +151,13 @@ export function CourseInterface({
       }
       // Se for um arquivo no formato blob (arquivos menores ou outros servidores)
       else if (contentType && !contentType.includes("application/json")) {
+        console.log("Processando como blob");
         const blob = await response.blob();
         const filename = selectedContent?.path.split("/").pop() || "download";
+        console.log("Nome do arquivo:", filename);
 
         const url = window.URL.createObjectURL(blob);
+        console.log("URL criada:", url);
         const link = document.createElement("a");
         link.href = url;
         link.download = filename;
@@ -159,10 +174,14 @@ export function CourseInterface({
       }
       // Se for um JSON com URL (outra forma de servir arquivos do Vercel Blob)
       else {
+        console.log("Processando como JSON");
         const data = await response.json();
+        console.log("Dados recebidos:", data);
 
-        if (data.url) {
-          window.open(data.url, "_blank");
+        if (data.url || data.path) {
+          const downloadUrl = data.url || data.path;
+          console.log("URL de download encontrada:", downloadUrl);
+          window.open(downloadUrl, "_blank");
 
           toast({
             title: "Download iniciado",
@@ -170,14 +189,18 @@ export function CourseInterface({
               "O arquivo está sendo baixado diretamente do servidor.",
           });
         } else {
+          console.error("JSON sem URL:", data);
           throw new Error("Formato de resposta não reconhecido");
         }
       }
     } catch (error) {
-      console.error("Erro ao baixar arquivo:", error);
+      console.error("Erro detalhado ao baixar arquivo:", error);
       toast({
         title: "Erro ao baixar",
-        description: "Não foi possível baixar o arquivo. Tente novamente.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível baixar o arquivo. Tente novamente.",
         variant: "destructive",
       });
     } finally {

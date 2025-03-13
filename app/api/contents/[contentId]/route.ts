@@ -10,12 +10,19 @@ export async function GET(
   { params }: { params: Promise<{ contentId: string }> }
 ) {
   try {
+    const resolvedParams = await params;
+    console.log(
+      "Solicitação de conteúdo recebida para ID:",
+      resolvedParams.contentId
+    );
+
     // Verificar autenticação
     const session = await getServerSession(authOptions);
     if (!session?.user) {
+      console.log("Acesso não autorizado: usuário não autenticado");
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    const resolvedParams = await params;
+
     const contentId = resolvedParams.contentId;
 
     // Buscar o conteúdo no banco de dados
@@ -24,15 +31,26 @@ export async function GET(
     });
 
     if (!content) {
+      console.log("Conteúdo não encontrado para ID:", contentId);
       return new NextResponse("Content not found", { status: 404 });
     }
+
+    console.log("Conteúdo encontrado:", {
+      id: content.id,
+      title: content.title,
+      type: content.type,
+      path: content.path,
+    });
 
     // Verificar se o usuário tem acesso ao conteúdo
     const hasAccess = await checkUserAccess(session.user.id, { contentId });
 
     if (!hasAccess) {
+      console.log("Acesso negado para usuário:", session.user.id);
       return new NextResponse("Forbidden", { status: 403 });
     }
+
+    console.log("Acesso autorizado para usuário:", session.user.id);
 
     // Se o conteúdo for um arquivo para download com URL do Vercel Blob
     if (content.type === "file" && content.path.includes("vercel-blob.com")) {
@@ -41,19 +59,23 @@ export async function GET(
         content.path.split("/").pop() ||
         content.title.replace(/\s+/g, "_") + ".file";
 
-      // Adicionamos o parâmetro de download com o nome do arquivo
-      const downloadUrl = new URL(content.path);
-      downloadUrl.searchParams.append("download", filename);
+      console.log("Preparando download do arquivo:", filename);
 
-      // Redirecionar para a URL do Vercel Blob com o parâmetro de download
-      return NextResponse.redirect(downloadUrl.toString());
+      // Passamos o caminho do arquivo diretamente como JSON para o cliente processar
+      // Em vez de redirecionamento que pode ser bloqueado por políticas de segurança
+      return NextResponse.json({
+        url: content.path,
+        filename: filename,
+        type: content.type,
+      });
     }
     // Para outros tipos de conteúdo (URLs, etc.)
     else {
+      console.log("Retornando metadados do conteúdo");
       return NextResponse.json(content);
     }
   } catch (error) {
-    console.error("Content access error:", error);
+    console.error("Erro de acesso ao conteúdo:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
