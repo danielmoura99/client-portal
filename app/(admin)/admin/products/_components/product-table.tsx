@@ -118,6 +118,8 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-zinc-800/50 hover:bg-zinc-800">
+              <TableHead className="text-zinc-400">ID</TableHead>{" "}
+              {/* Nova coluna */}
               <TableHead className="text-zinc-400">Nome</TableHead>
               <TableHead className="text-zinc-400">Slug</TableHead>
               <TableHead className="text-zinc-400">Tipo</TableHead>
@@ -130,7 +132,7 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
             {filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center py-6 text-zinc-500"
                 >
                   Nenhum produto encontrado
@@ -142,6 +144,9 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
                   key={product.id}
                   className="border-zinc-800 hover:bg-zinc-900/50"
                 >
+                  <TableCell className="font-medium text-zinc-200">
+                    {product.courseId}
+                  </TableCell>
                   <TableCell className="font-medium text-zinc-200">
                     {product.name}
                   </TableCell>

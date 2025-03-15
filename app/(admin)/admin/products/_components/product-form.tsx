@@ -53,7 +53,10 @@ const productFormSchema = z.object({
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
 interface ProductFormProps {
-  initialData?: ProductFormValues & { id: string };
+  initialData?: ProductFormValues & {
+    id: string;
+    courseId?: number; // Adicionamos courseId como opcional
+  };
 }
 
 export function ProductForm({ initialData }: ProductFormProps) {
@@ -215,6 +218,18 @@ export function ProductForm({ initialData }: ProductFormProps) {
                 </FormItem>
               )}
             />
+
+            {initialData && initialData.courseId !== undefined && (
+              <FormItem>
+                <FormLabel>Course ID</FormLabel>
+                <FormControl>
+                  <Input type="text" value={initialData.courseId} disabled />
+                </FormControl>
+                <FormDescription>
+                  Identificador único do curso (gerado automaticamente)
+                </FormDescription>
+              </FormItem>
+            )}
           </div>
 
           <FormField

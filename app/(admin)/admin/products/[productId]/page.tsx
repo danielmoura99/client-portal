@@ -39,7 +39,10 @@ export default async function EditProductPage({ params }: PageProps) {
           </Link>
         </Button>
         <h1 className="text-2xl font-bold text-white mb-2">Editar Produto</h1>
-        <p className="text-zinc-400">{product.name}</p>
+        <p className="text-zinc-400">
+          {product.name}{" "}
+          <span className="ml-2 text-blue-400">ID: {product.courseId}</span>
+        </p>
       </div>
 
       <ProductForm initialData={product} />

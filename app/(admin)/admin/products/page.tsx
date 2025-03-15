@@ -24,9 +24,9 @@ export default async function AdminProductsPage() {
         },
       },
     },
-    orderBy: {
-      name: "asc",
-    },
+    orderBy: [
+      { courseId: "asc" }, // Ordenar por courseId
+    ],
   });
 
   return (

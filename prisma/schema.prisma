@@ -36,6 +36,7 @@ enum ProductType {
 
 model Product {
   id          String      @id @default(cuid())
+  courseId    Int         @unique @default(autoincrement())
   name        String
   description String
   type        ProductType
