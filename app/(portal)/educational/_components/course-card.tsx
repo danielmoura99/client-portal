@@ -38,7 +38,7 @@ export function CourseCard({ course, isPurchased }: CourseCardProps) {
         ) : (
           <Button variant="outline" className="w-full mt-4" asChild>
             <Link
-              href={`https://tradershouse.com.br/checkout/${course.slug}`}
+              href={`https://api.whatsapp.com/send?phone=5562993776216`}
               target="_blank"
             >
               <Lock className="mr-2 h-4 w-4" />
