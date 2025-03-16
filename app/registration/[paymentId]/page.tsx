@@ -92,7 +92,9 @@ export default async function RegistrationPage({
             Registro de Avaliação
           </h1>
           <p className="text-zinc-400">
-            Complete seu cadastro para iniciar sua avaliação
+            Completando esse cadastro iniciaremos sua avaliação na data de
+            início escolhida e liberamos seu acesso a área de membros com os
+            conteúdos educacionais.
           </p>
         </div>
 

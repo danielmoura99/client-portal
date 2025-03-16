@@ -138,6 +138,13 @@ export function RegistrationForm({
     try {
       setIsLoading(true);
 
+      // Capturar os parâmetros da URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const isCombo = urlParams.get("combo") === "true";
+      const courseId = urlParams.get("courseId");
+      const orderBumpCourseIds = urlParams.get("orderBumpCourseIds");
+      const additionalCourseIds = urlParams.get("additionalCourseIds");
+
       const payload = {
         paymentId: paymentData.paymentData.hublaPaymentId,
         ...data,
@@ -145,6 +152,12 @@ export function RegistrationForm({
         platform,
         plan,
         type: paymentData.type, // Adicionando o tipo
+        urlParams: {
+          isCombo,
+          courseId,
+          orderBumpCourseIds,
+          additionalCourseIds,
+        },
       };
       console.log("Payload completo:", payload);
 

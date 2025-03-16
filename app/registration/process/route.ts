@@ -1,4 +1,4 @@
-// client-portal/app/api/registration/process/route.ts
+// client-portal/app/registration/process/route.ts
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
@@ -6,16 +6,44 @@ import { hash } from "bcryptjs";
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    console.log("[API] Chamada à rota /registration/process");
     console.log("[API] Dados recebidos:", data);
 
-    // Determinar qual URL usar baseado no tipo
+    if (!data.type) {
+      throw new Error("Tipo de avaliação não especificado");
+    }
+
+    // Determinação do cenário
+    const isCombo = data.combo === "true";
+    const mainCourseId = data.courseId;
+
+    // Processa IDs de cursos adicionais (orderBump e additionalCourses)
+    const orderBumpCourseIds = data.orderBumpCourseIds
+      ? Array.isArray(data.orderBumpCourseIds)
+        ? data.orderBumpCourseIds
+        : data.orderBumpCourseIds.split(",")
+      : [];
+
+    const additionalCourseIds = data.additionalCourseIds
+      ? Array.isArray(data.additionalCourseIds)
+        ? data.additionalCourseIds
+        : data.additionalCourseIds.split(",")
+      : [];
+
+    // Todos os IDs de cursos a liberar
+    const allEducationalIds = [
+      ...(isCombo && mainCourseId ? [mainCourseId] : []),
+      ...orderBumpCourseIds,
+      ...additionalCourseIds,
+    ].filter(Boolean);
+
     const adminUrl =
       data.type === "B3"
         ? process.env.NEXT_PUBLIC_ADMIN_API_URL
         : process.env.NEXT_PUBLIC_ADMIN_API_URL_FX;
 
-    console.log("[API fora pasta api] Usando URL:", adminUrl);
-    console.log("[API fora pasta api] Tipo:", data.type);
+    console.log("[API pasta api] Usando URL:", adminUrl);
+    console.log("[API pasta api] Tipo:", data.type);
 
     const apiKey = process.env.API_KEY;
 
@@ -56,6 +84,18 @@ export async function POST(request: NextRequest) {
 
       userId = newUser.id;
       console.log("[API] Novo usuário criado:", userId);
+    } else {
+      userId = existingUser.id;
+      console.log("[API] Usuário existente:", userId);
+    }
+
+    // Se há produtos educacionais, processar
+    if (allEducationalIds.length > 0) {
+      await processEducationalProducts(userId, allEducationalIds);
+      console.log(
+        "[API] Produtos educacionais processados:",
+        allEducationalIds
+      );
     }
 
     // Faz a requisição para o trader-evaluation para criar a avaliação
@@ -67,7 +107,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         ...data,
-        skipUserCreation: true,
+        skipUserCreation: true, // Sinaliza para não criar usuário no trader-evaluation
       }),
     });
 
@@ -83,6 +123,9 @@ export async function POST(request: NextRequest) {
       ...responseData,
       isNewUser: !existingUser,
       initialPassword: initialPassword,
+      educationalProductsAdded:
+        allEducationalIds.length > 0 ? allEducationalIds : undefined,
+      isCombo: isCombo,
     });
   } catch (error) {
     console.error("[API] Erro:", error);
@@ -95,5 +138,62 @@ export async function POST(request: NextRequest) {
         status: 500,
       }
     );
+  }
+}
+
+// Função auxiliar para processar produtos educacionais
+async function processEducationalProducts(
+  userId: string,
+  productIds: string[]
+) {
+  try {
+    // Verificar quais produtos existem antes de criar relacionamentos
+    const existingProducts = await prisma.product.findMany({
+      where: {
+        id: {
+          in: productIds,
+        },
+      },
+      select: { id: true },
+    });
+
+    // Extrair os IDs dos produtos existentes
+    const validProductIds = existingProducts.map((product) => product.id);
+
+    if (validProductIds.length === 0) {
+      console.warn("[API] Nenhum produto educacional válido encontrado");
+      return;
+    }
+
+    // Criar entradas na tabela UserProduct para cada produto válido
+    for (const productId of validProductIds) {
+      // Calcular a data de expiração (365 dias a partir de hoje)
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + 365);
+
+      await prisma.userProduct.upsert({
+        where: {
+          userId_productId: {
+            userId,
+            productId,
+          },
+        },
+        update: {
+          expiresAt: expirationDate,
+        },
+        create: {
+          userId,
+          productId,
+          expiresAt: expirationDate, // Sem data de expiração por padrão
+        },
+      });
+    }
+
+    console.log(
+      `[API] ${validProductIds.length} produtos educacionais liberados para o usuário ${userId}`
+    );
+  } catch (error) {
+    console.error("[API] Erro ao processar produtos educacionais:", error);
+    throw error;
   }
 }

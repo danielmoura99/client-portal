@@ -6,12 +6,62 @@ import { hash } from "bcryptjs";
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    console.log("[API] Chamada à rota /api/registration/process");
     console.log("[API] Dados recebidos:", data);
+
+    // Extrair parâmetros dos dados enviados pelo formulário
+    // Novos parâmetros são passados via objeto urlParams
+    let isCombo = false;
+    let mainCourseId = null;
+    let orderBumpCourseIdsParam = null;
+    let additionalCourseIdsParam = null;
+
+    // Verificar se os parâmetros da URL foram incluídos no payload
+    if (data.urlParams) {
+      isCombo = data.urlParams.isCombo === true;
+      mainCourseId = data.urlParams.courseId;
+      orderBumpCourseIdsParam = data.urlParams.orderBumpCourseIds;
+      additionalCourseIdsParam = data.urlParams.additionalCourseIds;
+
+      // Remover do payload para não enviar para o serviço externo
+      delete data.urlParams;
+    } else {
+      // Como fallback, tenta extrair da URL da API (comportamento original)
+      const url = new URL(request.url);
+      isCombo = url.searchParams.get("combo") === "true";
+      mainCourseId = url.searchParams.get("courseId");
+      orderBumpCourseIdsParam = url.searchParams.get("orderBumpCourseIds");
+      additionalCourseIdsParam = url.searchParams.get("additionalCourseIds");
+    }
+
+    console.log("[API] Parâmetros processados:", {
+      isCombo,
+      mainCourseId,
+      orderBumpCourseIdsParam,
+      additionalCourseIdsParam,
+    });
 
     if (!data.type) {
       throw new Error("Tipo de avaliação não especificado");
     }
 
+    // Processar string de IDs para arrays
+    const orderBumpCourseIds = orderBumpCourseIdsParam
+      ? orderBumpCourseIdsParam.split(",").filter(Boolean)
+      : [];
+
+    const additionalCourseIds = additionalCourseIdsParam
+      ? additionalCourseIdsParam.split(",").filter(Boolean)
+      : [];
+
+    // Todos os IDs de cursos a liberar
+    const allEducationalIds = [
+      ...(isCombo && mainCourseId ? [mainCourseId] : []),
+      ...orderBumpCourseIds,
+      ...additionalCourseIds,
+    ].filter(Boolean);
+
+    // Determina a URL da API com base no tipo de avaliação
     const adminUrl =
       data.type === "B3"
         ? process.env.NEXT_PUBLIC_ADMIN_API_URL
@@ -59,6 +109,25 @@ export async function POST(request: NextRequest) {
 
       userId = newUser.id;
       console.log("[API] Novo usuário criado:", userId);
+    } else {
+      userId = existingUser.id;
+      console.log("[API] Usuário existente:", userId);
+    }
+
+    console.log(
+      "[API] IDs de produtos educacionais a processar:",
+      allEducationalIds
+    );
+
+    // Se há produtos educacionais, processar
+    if (allEducationalIds.length > 0) {
+      await processEducationalProducts(userId, allEducationalIds);
+      console.log(
+        "[API] Produtos educacionais processados:",
+        allEducationalIds
+      );
+    } else {
+      console.log("[API] Nenhum produto educacional a processar");
     }
 
     // Faz a requisição para o trader-evaluation para criar a avaliação
@@ -81,11 +150,14 @@ export async function POST(request: NextRequest) {
       throw new Error(responseData.error || "Erro ao processar registro");
     }
 
-    // Retorna a resposta incluindo as informações do usuário
+    // Retorna a resposta incluindo as informações do usuário e produtos educacionais
     return Response.json({
       ...responseData,
       isNewUser: !existingUser,
       initialPassword: initialPassword,
+      educationalProductsAdded:
+        allEducationalIds.length > 0 ? allEducationalIds : undefined,
+      isCombo: isCombo,
     });
   } catch (error) {
     console.error("[API] Erro:", error);
@@ -98,5 +170,78 @@ export async function POST(request: NextRequest) {
         status: 500,
       }
     );
+  }
+}
+
+// Função auxiliar para processar produtos educacionais
+async function processEducationalProducts(userId: string, courseIds: string[]) {
+  try {
+    console.log("[API] Procurando produtos pelo courseId:", courseIds);
+
+    // Converter os courseIds de string para número (já que no banco devem ser números)
+    const numericCourseIds = courseIds
+      .map((id) => parseInt(id, 10))
+      .filter((id) => !isNaN(id)); // Remover valores que não são números
+
+    if (numericCourseIds.length === 0) {
+      console.warn("[API] Nenhum courseId válido encontrado após conversão");
+      return;
+    }
+
+    // Verificar quais produtos existem antes de criar relacionamentos
+    // Agora buscando por courseId em vez de id
+    const existingProducts = await prisma.product.findMany({
+      where: {
+        courseId: {
+          in: numericCourseIds,
+        },
+      },
+      select: { id: true, courseId: true, name: true },
+    });
+
+    console.log("[API] Produtos encontrados:", existingProducts);
+
+    if (existingProducts.length === 0) {
+      console.warn(
+        "[API] Nenhum produto educacional válido encontrado para os courseIds fornecidos"
+      );
+      return;
+    }
+
+    // Criar entradas na tabela UserProduct para cada produto encontrado
+    for (const product of existingProducts) {
+      // Calcular a data de expiração (365 dias a partir de hoje)
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + 365);
+
+      await prisma.userProduct.upsert({
+        where: {
+          userId_productId: {
+            userId,
+            productId: product.id, // Usar o id real do produto na relação
+          },
+        },
+        update: {
+          // Atualiza a data de expiração sempre que o produto for adicionado novamente
+          expiresAt: expirationDate,
+        },
+        create: {
+          userId,
+          productId: product.id, // Usar o id real do produto na relação
+          expiresAt: expirationDate, // Expira em 365 dias
+        },
+      });
+
+      console.log(
+        `[API] Produto ${product.name} (courseId: ${product.courseId}) liberado para o usuário ${userId}`
+      );
+    }
+
+    console.log(
+      `[API] ${existingProducts.length} produtos educacionais liberados para o usuário ${userId}`
+    );
+  } catch (error) {
+    console.error("[API] Erro ao processar produtos educacionais:", error);
+    throw error;
   }
 }
