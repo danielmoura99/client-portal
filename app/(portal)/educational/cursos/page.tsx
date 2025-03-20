@@ -21,8 +21,10 @@ export default async function CoursesPage() {
   // Filtrar apenas os cursos
   const userCourses = userProducts
     .filter((up) => up.product.type === ProductType.COURSE)
-    .map((up) => up.product);
-
+    .map((up) => ({
+      ...up.product,
+      coverImage: up.product.coverImage,
+    }));
   // Buscar cursos em destaque para exibir na vitrine
   // Você pode ajustar a query conforme necessário para selecionar os cursos que deseja destacar
   // Por exemplo, adicionar uma coluna "featured" na tabela Product e filtrar por ela
@@ -63,7 +65,7 @@ export default async function CoursesPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-wrap  gap-8">
               {userCourses.map((course) => (
                 <CourseCard
                   key={course.id}

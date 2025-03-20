@@ -39,6 +39,7 @@ model Product {
   courseId    Int         @unique @default(autoincrement())
   name        String
   description String
+  coverImage  String?     // URL da imagem de capa
   type        ProductType
   slug        String      @unique
   createdAt   DateTime    @default(now())

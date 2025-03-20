@@ -16,6 +16,7 @@ const productSchema = z.object({
     .string()
     .min(3)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  coverImage: z.string().optional(),
 });
 
 // Criar produto
@@ -46,6 +47,7 @@ export async function createProduct(data: z.infer<typeof productSchema>) {
         description: validatedData.description,
         type: validatedData.type,
         slug: validatedData.slug,
+        coverImage: validatedData.coverImage,
       },
     });
 
@@ -100,6 +102,7 @@ export async function updateProduct(
         description: validatedData.description,
         type: validatedData.type,
         slug: validatedData.slug,
+        coverImage: validatedData.coverImage,
       },
     });
 

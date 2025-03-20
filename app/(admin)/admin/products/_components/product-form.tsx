@@ -1,7 +1,7 @@
 // app/(admin)/admin/products/_components/product-form.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ProductType } from "@prisma/client";
@@ -29,7 +29,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { createProduct, updateProduct } from "../_actions/index";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
+import Image from "next/image";
 
 // Schema para validação do formulário
 const productFormSchema = z.object({
@@ -48,6 +49,7 @@ const productFormSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
       message: "O slug deve conter apenas letras minúsculas, números e hífens",
     }),
+  coverImage: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -61,6 +63,8 @@ interface ProductFormProps {
 
 export function ProductForm({ initialData }: ProductFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   // Definir valores padrão
@@ -70,12 +74,14 @@ export function ProductForm({ initialData }: ProductFormProps) {
         description: initialData.description,
         type: initialData.type,
         slug: initialData.slug,
+        coverImage: initialData.coverImage || "",
       }
     : {
         name: "",
         description: "",
         type: undefined,
         slug: "",
+        coverImage: "",
       };
 
   const form = useForm<ProductFormValues>({
@@ -94,6 +100,39 @@ export function ProductForm({ initialData }: ProductFormProps) {
         .replace(/--+/g, "-"); // Remove hífens duplicados
 
       form.setValue("slug", slug, { shouldValidate: true });
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+
+    try {
+      setIsUploading(true);
+
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/admin/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao fazer upload da imagem");
+      }
+
+      const data = await response.json();
+      form.setValue("coverImage", data.url, { shouldValidate: true });
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível fazer upload da imagem",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -231,6 +270,68 @@ export function ProductForm({ initialData }: ProductFormProps) {
               </FormItem>
             )}
           </div>
+
+          <FormField
+            control={form.control}
+            name="coverImage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Imagem de Capa</FormLabel>
+                <div className="flex gap-4 items-start">
+                  <div className="flex-1">
+                    <FormControl>
+                      <Input placeholder="URL da imagem de capa" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      URL da imagem de capa do curso (recomendado: 270x430
+                      pixels)
+                    </FormDescription>
+                    <FormMessage />
+                  </div>
+
+                  <div className="flex-shrink-0 flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload
+                        </>
+                      )}
+                    </Button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      accept="image/*"
+                    />
+
+                    {field.value && (
+                      <div className="relative w-24 h-36 rounded-md overflow-hidden border border-zinc-700">
+                        <Image
+                          src={field.value}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}

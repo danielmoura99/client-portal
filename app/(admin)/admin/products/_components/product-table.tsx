@@ -118,7 +118,7 @@ export default function ProductTable({ initialProducts }: ProductTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-zinc-800/50 hover:bg-zinc-800">
-              <TableHead className="text-zinc-400">ID</TableHead>{" "}
+              <TableHead className="text-zinc-400">ID</TableHead>
               {/* Nova coluna */}
               <TableHead className="text-zinc-400">Nome</TableHead>
               <TableHead className="text-zinc-400">Slug</TableHead>
