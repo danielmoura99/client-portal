@@ -121,7 +121,7 @@ export default async function CoursePage({
 
   // Classificar cada módulo como acessível ou bloqueado
   for (const moduleItem of course.modules) {
-    const isAccessible = accessibleModuleIds.includes(module.id);
+    const isAccessible = accessibleModuleIds.includes(moduleItem.id);
 
     // Calcular data de liberação se não for acessível e tiver releaseAfterDays definido
     let releaseDate = null;
@@ -182,30 +182,6 @@ export default async function CoursePage({
       }));
 
     moduleWithContent.contents = contentsForModule;
-  }
-
-  // Adicionar conteúdos sem módulo em um "módulo" especial
-  const contentsWithoutModule = productContents
-    .filter((pc) => !pc.moduleId)
-    .map((pc) => ({
-      id: pc.content.id,
-      title: pc.content.title,
-      type: pc.content.type,
-      path: pc.content.path,
-      description: pc.content.description,
-      sortOrder: pc.sortOrder,
-    }));
-
-  if (contentsWithoutModule.length > 0) {
-    accessibleModules.push({
-      id: "default",
-      title: "Conteúdo Principals",
-      description: "Materiais gerais do curso",
-      sortOrder: 9999,
-      isAccessible: true,
-      releaseDate: null,
-      contents: contentsWithoutModule,
-    });
   }
 
   // Encontrar o conteúdo selecionado através do parâmetro content

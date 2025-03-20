@@ -15,6 +15,14 @@ const moduleSchema = z.object({
     .min(3, { message: "O título deve ter pelo menos 3 caracteres" }),
   description: z.string().optional(),
   sortOrder: z.coerce.number().int().default(0),
+  immediateAccess: z.boolean().default(true),
+  releaseAfterDays: z.coerce
+    .number()
+    .int()
+    .nullable()
+    .refine((val) => val === null || val >= 1, {
+      message: "Dias para liberação deve ser 1 ou maior",
+    }),
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -48,6 +56,8 @@ export async function createModule(
         description: data.description || null,
         sortOrder: data.sortOrder,
         productId,
+        immediateAccess: data.immediateAccess,
+        releaseAfterDays: data.releaseAfterDays,
       },
     });
 
@@ -88,6 +98,8 @@ export async function updateModule(
         title: data.title,
         description: data.description || null,
         sortOrder: data.sortOrder,
+        immediateAccess: data.immediateAccess,
+        releaseAfterDays: data.releaseAfterDays,
       },
     });
 
