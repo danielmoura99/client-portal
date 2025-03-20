@@ -47,6 +47,18 @@ export async function PUT(
     const finalModuleId =
       moduleId === "none" || moduleId === "" ? null : moduleId;
     const sortOrder = Number(formData.get("sortOrder") || 0);
+
+    // Novo: obter productContents como string JSON e converter para array
+    const productContentsStr = formData.get("productContents") as string | null;
+    let productContentsList = [];
+    if (productContentsStr) {
+      try {
+        productContentsList = JSON.parse(productContentsStr);
+      } catch (e) {
+        console.error("Erro ao fazer parse de productContents:", e);
+      }
+    }
+
     let filePath = formData.get("path") as string;
 
     // Validar dados essenciais
@@ -89,7 +101,7 @@ export async function PUT(
       filePath = url;
     }
 
-    // Transação para atualizar conteúdo e associação de produto
+    // Transação para atualizar conteúdo e associações de produtos
     const updatedContent = await prisma.$transaction(async (tx) => {
       // 1. Atualizar o conteúdo base
       const content = await tx.content.update({
@@ -102,35 +114,70 @@ export async function PUT(
         },
       });
 
-      // 2. Verificar se já existe associação com este produto
-      const existingAssociation = await tx.productContent.findFirst({
-        where: {
-          contentId,
-          productId,
-        },
-      });
-
-      // 3. Atualizar ou criar a associação
-      if (existingAssociation) {
-        await tx.productContent.update({
+      // 2. Se há productId no formulário principal, garantir essa associação
+      if (productId) {
+        // Verificar se já existe associação com este produto
+        const existingAssociation = await tx.productContent.findFirst({
           where: {
-            id: existingAssociation.id,
-          },
-          data: {
-            moduleId: finalModuleId,
-            sortOrder,
-          },
-        });
-      } else {
-        // Se o produto selecionado é diferente, criar nova associação
-        await tx.productContent.create({
-          data: {
             contentId,
             productId,
-            moduleId: finalModuleId,
-            sortOrder,
           },
         });
+
+        if (existingAssociation) {
+          // Atualizar associação existente
+          await tx.productContent.update({
+            where: {
+              id: existingAssociation.id,
+            },
+            data: {
+              moduleId: finalModuleId,
+              sortOrder,
+            },
+          });
+        } else {
+          // Criar nova associação
+          await tx.productContent.create({
+            data: {
+              contentId,
+              productId,
+              moduleId: finalModuleId,
+              sortOrder,
+            },
+          });
+        }
+      }
+
+      // 3. Processar lista adicional de productContents para manter múltiplas associações
+      if (productContentsList && productContentsList.length > 0) {
+        // Primeiro obter todos os IDs de produtos já associados para não duplicar
+        const existingProductIds = new Set(
+          (
+            await tx.productContent.findMany({
+              where: { contentId },
+              select: { productId: true },
+            })
+          ).map((pc) => pc.productId)
+        );
+
+        // Processar cada associação da lista
+        for (const pc of productContentsList) {
+          // Pular se já processamos este productId acima
+          if (pc.productId === productId) continue;
+
+          // Pular se já existe (será atualizado apenas se explicitamente solicitado)
+          if (existingProductIds.has(pc.productId)) continue;
+
+          // Criar nova associação
+          await tx.productContent.create({
+            data: {
+              contentId,
+              productId: pc.productId,
+              moduleId: pc.moduleId || null,
+              sortOrder: pc.sortOrder || 0,
+            },
+          });
+        }
       }
 
       return content;

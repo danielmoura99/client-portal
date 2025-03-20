@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/(admin)/admin/contents/_components/content-form.tsx
+// app/(admin)/admin/contents/_components/content-form.tsx - Versão atualizada
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -27,7 +27,14 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, Trash } from "lucide-react";
+import {
+  Loader2,
+  UploadCloud,
+  Trash,
+  InfoIcon,
+  PlusCircle,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Img } from "@react-email/components";
 
 // Schema para validação do formulário
@@ -68,12 +75,18 @@ export function ContentForm({
   products,
   modules,
   defaultProductId = "",
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   productContents = [],
 }: ContentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [additionalAssociations, setAdditionalAssociations] = useState<any[]>(
+    productContents.filter(
+      (pc) =>
+        pc.productId !== defaultProductId &&
+        (!initialData || pc.productId !== initialData.productId)
+    )
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -158,6 +171,71 @@ export function ContentForm({
     // Não limpar o campo path, para manter o valor original em caso de edição
   };
 
+  // Adicionar uma nova associação de produto
+  const addProductAssociation = () => {
+    // Verificar se há produtos disponíveis que ainda não foram associados
+    const usedProductIds = new Set([
+      selectedProductId,
+      ...additionalAssociations.map((a) => a.productId),
+    ]);
+
+    const availableProducts = products.filter((p) => !usedProductIds.has(p.id));
+
+    if (availableProducts.length === 0) {
+      toast({
+        title: "Sem produtos disponíveis",
+        description: "Todos os produtos já foram associados a este conteúdo",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Adicionar o primeiro produto disponível
+    setAdditionalAssociations([
+      ...additionalAssociations,
+      {
+        productId: availableProducts[0].id,
+        moduleId: null,
+        sortOrder: 0,
+      },
+    ]);
+  };
+
+  // Remover uma associação de produto
+  const removeProductAssociation = (index: number) => {
+    const newAssociations = [...additionalAssociations];
+    newAssociations.splice(index, 1);
+    setAdditionalAssociations(newAssociations);
+  };
+
+  // Atualizar uma associação de produto
+  const updateProductAssociation = (
+    index: number,
+    field: string,
+    value: any
+  ) => {
+    const newAssociations = [...additionalAssociations];
+    newAssociations[index] = {
+      ...newAssociations[index],
+      [field]: value,
+    };
+    setAdditionalAssociations(newAssociations);
+  };
+
+  // Obter módulos para um produto específico
+  const getModulesForProduct = (productId: string) => {
+    // Console log para debug
+    console.log(`Buscando módulos para produto: ${productId}`);
+    console.log(`Módulos disponíveis:`, modules);
+
+    const filteredModules = modules.filter(
+      (module) => module.productId === productId
+    );
+    console.log(`Módulos filtrados:`, filteredModules);
+
+    return filteredModules;
+  };
+
   const onSubmit = async (values: ContentFormValues) => {
     try {
       setIsSubmitting(true);
@@ -174,12 +252,18 @@ export function ContentForm({
         }
       });
 
+      // Adicionar as associações de produtos adicionais
+      formData.append(
+        "productContents",
+        JSON.stringify(additionalAssociations)
+      );
+
       // Adicionar arquivo, se selecionado
       if (selectedFile) {
         formData.append("file", selectedFile);
       }
 
-      // Enviar para a nova API
+      // Enviar para a API
       const url = initialData
         ? `/api/admin/contents/update/${initialData.id}`
         : "/api/admin/contents";
@@ -228,7 +312,7 @@ export function ContentForm({
               name="productId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Produto</FormLabel>
+                  <FormLabel>Produto Principal</FormLabel>
                   <Select
                     onValueChange={(value) => {
                       // Limpar a seleção de módulo ao mudar de produto
@@ -253,7 +337,7 @@ export function ContentForm({
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Produto ao qual este conteúdo pertence
+                    Produto principal ao qual este conteúdo pertence
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -494,6 +578,171 @@ export function ContentForm({
               </FormItem>
             )}
           />
+
+          {/* Novas associações de produtos adicionais */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-zinc-100">
+                  Produtos Adicionais
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  Associe este conteúdo a produtos adicionais (além do produto
+                  principal)
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addProductAssociation}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Adicionar Produto
+              </Button>
+            </div>
+
+            {additionalAssociations.length === 0 ? (
+              <div className="bg-zinc-900/70 border border-dashed border-zinc-800 rounded-lg p-4 text-center">
+                <p className="text-zinc-500 flex items-center justify-center">
+                  <InfoIcon className="h-4 w-4 mr-2" />O conteúdo será associado
+                  apenas ao produto principal selecionado acima
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {additionalAssociations.map((association, index) => {
+                  const modulesForThisProduct = getModulesForProduct(
+                    association.productId
+                  );
+                  const productName =
+                    products.find((p) => p.id === association.productId)
+                      ?.name || "Produto";
+
+                  return (
+                    <div
+                      key={index}
+                      className="bg-zinc-900/70 border border-zinc-800 rounded-lg p-4"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center">
+                          <Badge className="bg-blue-500/20 text-blue-400 mr-2">
+                            Produto Adicional
+                          </Badge>
+                          <h4 className="font-medium text-zinc-200">
+                            {productName}
+                          </h4>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeProductAssociation(index)}
+                          className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Seletor de produto */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-zinc-300">
+                            Produto
+                          </label>
+                          <Select
+                            value={association.productId}
+                            onValueChange={(value) =>
+                              updateProductAssociation(
+                                index,
+                                "productId",
+                                value
+                              )
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um produto" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {products
+                                .filter(
+                                  (p) =>
+                                    p.id !== selectedProductId &&
+                                    !additionalAssociations
+                                      .filter((a, i) => i !== index)
+                                      .some((a) => a.productId === p.id)
+                                )
+                                .map((product) => (
+                                  <SelectItem
+                                    key={product.id}
+                                    value={product.id}
+                                  >
+                                    {product.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Seletor de módulo */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-zinc-300">
+                            Módulo (opcional)
+                          </label>
+                          <Select
+                            value={association.moduleId || "none"}
+                            onValueChange={(value) =>
+                              updateProductAssociation(
+                                index,
+                                "moduleId",
+                                value === "none" ? null : value
+                              )
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um módulo (opcional)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">
+                                Nenhum módulo
+                              </SelectItem>
+                              {modulesForThisProduct.map((moduleItem) => (
+                                <SelectItem
+                                  key={moduleItem.id}
+                                  value={moduleItem.id}
+                                >
+                                  {moduleItem.title}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Ordem */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-zinc-300">
+                            Ordem de Exibição
+                          </label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={association.sortOrder}
+                            onChange={(e) =>
+                              updateProductAssociation(
+                                index,
+                                "sortOrder",
+                                parseInt(e.target.value) || 0
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Botões */}
           <div className="flex justify-end space-x-4">

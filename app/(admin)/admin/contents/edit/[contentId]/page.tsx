@@ -1,4 +1,4 @@
-// app/(admin)/admin/contents/edit/[contentId]/page.tsx
+// app/(admin)/admin/contents/edit/[contentId]/page.tsx - versão corrigida
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
@@ -37,7 +37,7 @@ export default async function EditContentPage({
       notFound();
     }
 
-    // Buscar produtos
+    // Buscar todos os produtos
     const products = await prisma.product.findMany({
       orderBy: { name: "asc" },
     });
@@ -46,11 +46,38 @@ export default async function EditContentPage({
     const primaryProductContent = content.productContents[0] || null;
     const primaryProductId = primaryProductContent?.productId || "";
 
-    // Buscar módulos
+    // MODIFICAÇÃO: Buscar módulos para TODOS os produtos associados ao conteúdo
+    // Primeiro, identificar todos os productIds relacionados ao conteúdo
+    const associatedProductIds = new Set(
+      content.productContents.map((pc) => pc.productId)
+    );
+
+    // Adicionar também quaisquer outros produtos que possam não estar associados ainda
+    products.forEach((product) => associatedProductIds.add(product.id));
+
+    // Buscar módulos para todos esses produtos
     const modules = await prisma.module.findMany({
-      where: primaryProductId ? { productId: primaryProductId } : undefined,
+      where: {
+        productId: {
+          in: Array.from(associatedProductIds),
+        },
+      },
       orderBy: { title: "asc" },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
+
+    // Incluir logs para debug (se necessário)
+    console.log(
+      `Produtos associados: ${Array.from(associatedProductIds).join(", ")}`
+    );
+    console.log(`Número de módulos carregados: ${modules.length}`);
 
     return (
       <div className="space-y-6">
