@@ -1,4 +1,5 @@
-// app/(portal)/educational/cursos/[slug]/_components/course-interface.tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// app/(portal)/educational/cursos/[slug]/_components/course-interface.tsx - componente atualizado
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,8 +14,13 @@ import {
   Video,
   File,
   Loader2,
+  Lock,
+  Calendar,
+  Clock,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { format, isValid } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Content {
   id: string;
@@ -29,26 +35,29 @@ interface Module {
   id: string;
   title: string;
   description?: string | null;
+  isAccessible: boolean;
+  releaseDate: string | null;
   contents: Content[];
+  sortOrder: number;
 }
 
 interface CourseInterfaceProps {
   courseId: string;
   courseName: string;
   courseSlug: string;
-  modules: Module[];
+  accessibleModules: Module[];
+  lockedModules: Module[];
   initialSelectedContent: Content | null;
 }
 
 export function CourseInterface({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   courseId,
   courseName,
   courseSlug,
-  modules,
+  accessibleModules,
+  lockedModules,
   initialSelectedContent,
 }: CourseInterfaceProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
   const [selectedContent, setSelectedContent] = useState<Content | null>(
     initialSelectedContent
@@ -56,7 +65,7 @@ export function CourseInterface({
   const [expandedModules, setExpandedModules] = useState<
     Record<string, boolean>
   >(
-    modules.reduce(
+    [...accessibleModules, ...lockedModules].reduce(
       (acc, module) => ({
         ...acc,
         [module.id]: false,
@@ -68,22 +77,27 @@ export function CourseInterface({
 
   // Se não tiver conteúdo selecionado inicialmente, selecionar o primeiro disponível
   useEffect(() => {
-    if (!selectedContent && modules.length > 0) {
-      for (const moduleItem of modules) {
-        if (moduleItem.contents.length > 0) {
+    if (!selectedContent && accessibleModules.length > 0) {
+      for (const moduleItem of accessibleModules) {
+        if (moduleItem.contents && moduleItem.contents.length > 0) {
           setSelectedContent(moduleItem.contents[0]);
+          // Expandir o módulo que contém o conteúdo selecionado
+          setExpandedModules((prev) => ({
+            ...prev,
+            [moduleItem.id]: true,
+          }));
           break;
         }
       }
     }
-  }, [modules, selectedContent]);
+  }, [accessibleModules, selectedContent]);
 
   // Se o módulo do conteúdo selecionado estiver fechado, abri-lo
   useEffect(() => {
     if (selectedContent) {
       // Encontrar o módulo do conteúdo selecionado
-      for (const moduleItem of modules) {
-        const contentInModule = moduleItem.contents.find(
+      for (const moduleItem of accessibleModules) {
+        const contentInModule = moduleItem.contents?.find(
           (c) => c.id === selectedContent.id
         );
         if (contentInModule) {
@@ -95,7 +109,7 @@ export function CourseInterface({
         }
       }
     }
-  }, [selectedContent, modules]);
+  }, [selectedContent, accessibleModules]);
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) => ({
@@ -118,29 +132,18 @@ export function CourseInterface({
   const handleDownload = async (contentId: string) => {
     try {
       setIsDownloading(true);
-      console.log("Iniciando download do conteúdo ID:", contentId);
 
       const response = await fetch(`/api/contents/${contentId}`);
-      console.log("Resposta recebida:", {
-        ok: response.ok,
-        status: response.status,
-        redirected: response.redirected,
-        redirectUrl: response.redirected ? response.url : null,
-        contentType: response.headers.get("content-type"),
-      });
 
       if (!response.ok) {
-        console.error("Resposta não OK:", response.status, response.statusText);
         throw new Error(`Erro ao baixar arquivo: Status ${response.status}`);
       }
 
       // Verificamos o tipo de resposta
       const contentType = response.headers.get("content-type");
-      console.log("Tipo de conteúdo:", contentType);
 
       // Se for um redirecionamento (para Vercel Blob)
       if (response.redirected) {
-        console.log("Redirecionamento detectado para:", response.url);
         // Abrimos a URL do Vercel Blob em uma nova aba
         window.open(response.url, "_blank");
 
@@ -151,13 +154,10 @@ export function CourseInterface({
       }
       // Se for um arquivo no formato blob (arquivos menores ou outros servidores)
       else if (contentType && !contentType.includes("application/json")) {
-        console.log("Processando como blob");
         const blob = await response.blob();
         const filename = selectedContent?.path.split("/").pop() || "download";
-        console.log("Nome do arquivo:", filename);
 
         const url = window.URL.createObjectURL(blob);
-        console.log("URL criada:", url);
         const link = document.createElement("a");
         link.href = url;
         link.download = filename;
@@ -174,13 +174,10 @@ export function CourseInterface({
       }
       // Se for um JSON com URL (outra forma de servir arquivos do Vercel Blob)
       else {
-        console.log("Processando como JSON");
         const data = await response.json();
-        console.log("Dados recebidos:", data);
 
         if (data.url || data.path) {
           const downloadUrl = data.url || data.path;
-          console.log("URL de download encontrada:", downloadUrl);
           window.open(downloadUrl, "_blank");
 
           toast({
@@ -189,7 +186,6 @@ export function CourseInterface({
               "O arquivo está sendo baixado diretamente do servidor.",
           });
         } else {
-          console.error("JSON sem URL:", data);
           throw new Error("Formato de resposta não reconhecido");
         }
       }
@@ -308,6 +304,54 @@ export function CourseInterface({
     }
   };
 
+  // Formatar data de liberação para exibição
+  const formatReleaseDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    } catch (error) {
+      return "Data inválida";
+    }
+  };
+
+  // Verificar se uma data está no futuro (para decidir se mostramos "Em breve" ou a data exata)
+  const isFutureDate = (dateString: string | null) => {
+    if (!dateString) return false;
+
+    try {
+      const date = new Date(dateString);
+      return isValid(date) && date > new Date();
+    } catch {
+      return false;
+    }
+  };
+
+  // Calcular quanto tempo falta até a data de liberação
+  const getTimeUntilRelease = (dateString: string | null) => {
+    if (!dateString) return null;
+
+    try {
+      const releaseDate = new Date(dateString);
+      if (!isValid(releaseDate)) return null;
+
+      const now = new Date();
+      if (releaseDate <= now) return "Disponível em breve";
+
+      const diffTime = Math.abs(releaseDate.getTime() - now.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays <= 1) return "Disponível amanhã";
+      return `Disponível em ${diffDays} dias`;
+    } catch {
+      return null;
+    }
+  };
+
+  // Organizar todos os módulos por ordem
+  const allModulesSorted = [...accessibleModules, ...lockedModules].sort(
+    (a, b) => a.sortOrder - b.sortOrder
+  );
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Lista de módulos e conteúdos */}
@@ -319,26 +363,44 @@ export function CourseInterface({
             </h2>
 
             <div className="space-y-3">
-              {modules.map((module) => (
+              {allModulesSorted.map((module) => (
                 <div
                   key={module.id}
                   className="border-b border-zinc-800 pb-3 last:pb-0 last:border-0"
                 >
                   <button
-                    className="flex w-full items-center justify-between text-left font-medium text-zinc-100 hover:text-zinc-50 transition-colors py-2"
-                    onClick={() => toggleModule(module.id)}
+                    className={`flex w-full items-center justify-between text-left font-medium transition-colors py-2 
+                      ${!module.isAccessible ? "text-zinc-500" : "text-zinc-100 hover:text-zinc-50"}`}
+                    onClick={() =>
+                      module.isAccessible && toggleModule(module.id)
+                    }
+                    disabled={!module.isAccessible}
                   >
-                    <span>{module.title}</span>
-                    {expandedModules[module.id] ? (
-                      <ChevronDown className="h-4 w-4 text-zinc-400" />
+                    <div className="flex items-center">
+                      {!module.isAccessible && (
+                        <Lock className="h-3 w-3 mr-2 text-zinc-500" />
+                      )}
+                      <span>{module.title}</span>
+                    </div>
+                    {module.isAccessible ? (
+                      expandedModules[module.id] ? (
+                        <ChevronDown className="h-4 w-4 text-zinc-400" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-zinc-400" />
+                      )
                     ) : (
-                      <ChevronRight className="h-4 w-4 text-zinc-400" />
+                      <span className="text-xs text-zinc-500 flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {module.releaseDate
+                          ? formatReleaseDate(module.releaseDate)
+                          : "Bloqueado"}
+                      </span>
                     )}
                   </button>
 
-                  {expandedModules[module.id] && (
+                  {module.isAccessible && expandedModules[module.id] && (
                     <div className="mt-2 pl-3 space-y-1">
-                      {module.contents.length > 0 ? (
+                      {module.contents && module.contents.length > 0 ? (
                         module.contents.map((content) => (
                           <button
                             key={content.id}
@@ -360,6 +422,36 @@ export function CourseInterface({
                           Nenhum conteúdo disponível neste módulo
                         </p>
                       )}
+                    </div>
+                  )}
+
+                  {!module.isAccessible && (
+                    <div className="mt-2 pl-3">
+                      <div className="bg-zinc-800/30 p-3 rounded-md text-xs text-zinc-500">
+                        {module.releaseDate &&
+                        formatReleaseDate(module.releaseDate) ? (
+                          <div className="space-y-1">
+                            <p className="flex items-center gap-1 text-zinc-400">
+                              <Calendar className="h-3 w-3 text-amber-500" />
+                              <span>Data de liberação:</span>
+                            </p>
+                            <p className="font-medium text-zinc-300">
+                              {formatReleaseDate(module.releaseDate)}
+                            </p>
+
+                            {isFutureDate(module.releaseDate) && (
+                              <p className="flex items-center gap-1 mt-2 text-zinc-400">
+                                <Clock className="h-3 w-3 text-blue-500" />
+                                <span>
+                                  {getTimeUntilRelease(module.releaseDate)}
+                                </span>
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p>Este módulo será disponibilizado em breve.</p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

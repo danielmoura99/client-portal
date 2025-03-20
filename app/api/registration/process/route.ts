@@ -2,6 +2,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
+import { logUserProductAccess } from "@/lib/services/module-access-control";
 
 export async function POST(request: NextRequest) {
   try {
@@ -231,6 +232,8 @@ async function processEducationalProducts(userId: string, courseIds: string[]) {
           expiresAt: expirationDate, // Expira em 365 dias
         },
       });
+
+      await logUserProductAccess(userId, product.id);
 
       console.log(
         `[API] Produto ${product.name} (courseId: ${product.courseId}) liberado para o usuário ${userId}`

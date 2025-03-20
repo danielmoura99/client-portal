@@ -48,6 +48,7 @@ model Product {
   contents    ProductContent[]
   modules     Module[]
   userProducts UserProduct[]
+  accessLogs      UserProductAccessLog[]
 }
 
 model Content {
@@ -70,6 +71,8 @@ model Module {
   title       String
   description String?
   sortOrder   Int       @default(0)
+  immediateAccess  Boolean     @default(true) // Liberado imediatamente após compra?
+  releaseAfterDays Int?        // Liberado após X dias (null = nunca liberado automaticamente)
   
   // Relações
   productId   String
@@ -78,6 +81,18 @@ model Module {
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model UserProductAccessLog {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  accessGrantedAt DateTime    @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId, productId])
 }
 
 model UserProduct {
@@ -112,6 +127,7 @@ model User {
   evaluations   Evaluation[]
   requests      Request[]
   products    UserProduct[]
+  accessLogs      UserProductAccessLog[]
 }
 
 model Evaluation {

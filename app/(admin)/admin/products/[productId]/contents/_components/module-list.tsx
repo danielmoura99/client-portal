@@ -1,17 +1,21 @@
+// app/(admin)/admin/products/[productId]/contents/_components/module-list.tsx
 "use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Edit, Plus, Trash2 } from "lucide-react";
+import { Edit, Plus, Trash2, Lock, Calendar } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DeleteModuleDialog } from "../modules/_components/delete-module-dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface Module {
   id: string;
   title: string;
   description: string | null;
   sortOrder: number;
+  immediateAccess: boolean;
+  releaseAfterDays: number | null;
   _count?: {
     contents: number;
   };
@@ -35,6 +39,9 @@ export default function ModuleList({ modules, productId }: ModuleListProps) {
   const handleModuleDeleted = () => {
     router.refresh();
   };
+
+  // Ordenar módulos por sortOrder
+  const sortedModules = [...modules].sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
     <div>
@@ -62,7 +69,7 @@ export default function ModuleList({ modules, productId }: ModuleListProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {modules.map((module) => (
+          {sortedModules.map((module) => (
             <div
               key={module.id}
               className="p-4 border border-zinc-800 rounded-lg bg-zinc-900/50 hover:bg-zinc-900/80 transition-colors"
@@ -75,9 +82,24 @@ export default function ModuleList({ modules, productId }: ModuleListProps) {
                     </h3>
 
                     {(module._count?.contents || 0) > 0 && (
-                      <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full font-medium">
+                      <Badge className="bg-blue-500/20 text-blue-400">
                         {module._count?.contents} conteúdo(s)
-                      </span>
+                      </Badge>
+                    )}
+
+                    {/* Badge de acesso imediato ou programado */}
+                    {module.immediateAccess ? (
+                      <Badge className="bg-green-500/20 text-green-400 flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Acesso Imediato
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-500/20 text-amber-400 flex items-center">
+                        <Lock className="h-3 w-3 mr-1" />
+                        {module.releaseAfterDays
+                          ? `Liberado após ${module.releaseAfterDays} dias`
+                          : "Bloqueado"}
+                      </Badge>
                     )}
                   </div>
 

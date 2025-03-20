@@ -5,9 +5,32 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import {
   checkUserAccess,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getProductContents,
 } from "@/lib/services/access-control";
 import { CourseInterface } from "./_components/course-interface";
+import {
+  getAccessibleModules,
+  logUserProductAccess,
+} from "@/lib/services/module-access-control";
+
+// Definição dos tipos para os módulos
+interface ModuleInfo {
+  id: string;
+  title: string;
+  description: string | null;
+  sortOrder: number;
+  isAccessible: boolean;
+  releaseDate: string | null;
+  contents: {
+    id: string;
+    title: string;
+    type: string;
+    path: string;
+    description?: string | null;
+    sortOrder: number;
+  }[];
+}
 
 interface CoursePageProps {
   params: Promise<{
@@ -29,6 +52,7 @@ export default async function CoursePage({
   }
   const resolvedSearchParams = await searchParams;
   const resolvedParams = await params;
+
   // Buscar o curso pelo slug
   const course = await prisma.product.findUnique({
     where: { slug: resolvedParams.slug },
@@ -47,6 +71,8 @@ export default async function CoursePage({
           title: true,
           description: true,
           sortOrder: true,
+          immediateAccess: true,
+          releaseAfterDays: true,
         },
       },
     },
@@ -65,13 +91,87 @@ export default async function CoursePage({
     redirect("/educational/cursos");
   }
 
-  // Buscar conteúdos do curso
-  const productContents = await getProductContents(course.id);
+  // Garantir que o acesso do usuário está registrado para cálculos de liberação
+  try {
+    await logUserProductAccess(session.user.id, course.id);
+  } catch (error) {
+    console.error("Erro ao registrar acesso do usuário:", error);
+    // Continuar mesmo se houver erro no registro
+  }
 
-  // Organizar os conteúdos por módulo
-  const modulesWithContents = course.modules.map((module) => {
-    const moduleContents = productContents
-      .filter((pc) => pc.moduleId === module.id)
+  // Buscar os módulos que o usuário pode acessar
+  const accessibleModuleIds = await getAccessibleModules(
+    session.user.id,
+    course.id
+  );
+
+  // Obter o log de acesso para calcular datas de liberação futura
+  const accessLog = await prisma.userProductAccessLog.findUnique({
+    where: {
+      userId_productId: {
+        userId: session.user.id,
+        productId: course.id,
+      },
+    },
+  });
+
+  // Preparar arrays para módulos acessíveis e bloqueados
+  const accessibleModules: ModuleInfo[] = [];
+  const lockedModules: ModuleInfo[] = [];
+
+  // Classificar cada módulo como acessível ou bloqueado
+  for (const moduleItem of course.modules) {
+    const isAccessible = accessibleModuleIds.includes(module.id);
+
+    // Calcular data de liberação se não for acessível e tiver releaseAfterDays definido
+    let releaseDate = null;
+    if (!isAccessible && moduleItem.releaseAfterDays !== null && accessLog) {
+      releaseDate = new Date(accessLog.accessGrantedAt);
+      releaseDate.setDate(releaseDate.getDate() + moduleItem.releaseAfterDays);
+    }
+
+    const moduleInfo: ModuleInfo = {
+      id: moduleItem.id,
+      title: moduleItem.title,
+      description: moduleItem.description,
+      sortOrder: moduleItem.sortOrder,
+      isAccessible,
+      releaseDate: releaseDate ? releaseDate.toISOString() : null,
+      contents: [], // Inicialmente vazio, preenchido depois para os acessíveis
+    };
+
+    if (isAccessible) {
+      accessibleModules.push(moduleInfo);
+    } else {
+      lockedModules.push(moduleInfo);
+    }
+  }
+
+  // Buscar conteúdos apenas para os módulos acessíveis
+  const productContents = await prisma.productContent.findMany({
+    where: {
+      productId: course.id,
+      OR: [
+        { moduleId: { in: accessibleModuleIds } },
+        { moduleId: null }, // Também incluir conteúdos sem módulo
+      ],
+    },
+    include: {
+      content: true,
+      module: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  // Adicionar conteúdos aos módulos acessíveis
+  for (const moduleWithContent of accessibleModules) {
+    const contentsForModule = productContents
+      .filter((pc) => pc.moduleId === moduleWithContent.id)
       .map((pc) => ({
         id: pc.content.id,
         title: pc.content.title,
@@ -81,13 +181,10 @@ export default async function CoursePage({
         sortOrder: pc.sortOrder,
       }));
 
-    return {
-      ...module,
-      contents: moduleContents,
-    };
-  });
+    moduleWithContent.contents = contentsForModule;
+  }
 
-  // Adicionar conteúdos sem módulo
+  // Adicionar conteúdos sem módulo em um "módulo" especial
   const contentsWithoutModule = productContents
     .filter((pc) => !pc.moduleId)
     .map((pc) => ({
@@ -100,11 +197,13 @@ export default async function CoursePage({
     }));
 
   if (contentsWithoutModule.length > 0) {
-    modulesWithContents.push({
+    accessibleModules.push({
       id: "default",
-      title: "Conteúdo Principal",
+      title: "Conteúdo Principals",
       description: "Materiais gerais do curso",
       sortOrder: 9999,
+      isAccessible: true,
+      releaseDate: null,
       contents: contentsWithoutModule,
     });
   }
@@ -112,8 +211,8 @@ export default async function CoursePage({
   // Encontrar o conteúdo selecionado através do parâmetro content
   let initialSelectedContent = null;
   if (resolvedSearchParams?.content) {
-    // Procurar o conteúdo em todos os módulos
-    for (const moduleItem of modulesWithContents) {
+    // Procurar o conteúdo em todos os módulos acessíveis
+    for (const moduleItem of accessibleModules) {
       const found = moduleItem.contents.find(
         (c) => c.id === resolvedSearchParams.content
       );
@@ -126,7 +225,7 @@ export default async function CoursePage({
 
   // Se não houver conteúdo selecionado, usar o primeiro disponível
   if (!initialSelectedContent) {
-    for (const moduleItem of modulesWithContents) {
+    for (const moduleItem of accessibleModules) {
       if (moduleItem.contents.length > 0) {
         initialSelectedContent = moduleItem.contents[0];
         break;
@@ -146,7 +245,8 @@ export default async function CoursePage({
         courseId={course.id}
         courseName={course.name}
         courseSlug={course.slug}
-        modules={modulesWithContents}
+        accessibleModules={accessibleModules}
+        lockedModules={lockedModules}
         initialSelectedContent={initialSelectedContent}
       />
     </div>

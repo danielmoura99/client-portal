@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { logUserProductAccess } from "@/lib/services/module-access-control";
 
 export async function addProductAccess(userId: string, productId: string) {
   const session = await getServerSession(authOptions);
@@ -53,6 +54,8 @@ export async function addProductAccess(userId: string, productId: string) {
         productId,
       },
     });
+
+    await logUserProductAccess(userId, productId);
 
     revalidatePath(`/admin/users/${userId}/access`);
     return { success: true };
