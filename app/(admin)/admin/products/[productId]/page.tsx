@@ -29,6 +29,17 @@ export default async function EditProductPage({ params }: PageProps) {
     notFound();
   }
 
+  const formattedProduct = {
+    id: product.id,
+    courseId: product.courseId,
+    name: product.name,
+    description: product.description,
+    type: product.type,
+    slug: product.slug,
+    // Transformar 'string | null' para 'string | undefined'
+    coverImage: product.coverImage || undefined,
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -45,7 +56,7 @@ export default async function EditProductPage({ params }: PageProps) {
         </p>
       </div>
 
-      <ProductForm initialData={product} />
+      <ProductForm initialData={formattedProduct} />
     </div>
   );
 }
