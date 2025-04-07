@@ -105,6 +105,9 @@ export function RequestForm() {
                   <SelectItem value="CAPITAL_REQUEST">
                     Solicitar Capital(MGT)
                   </SelectItem>
+                  <SelectItem value="PLATFORM_REQUEST">
+                    Solicitar Plataforma(MGT)
+                  </SelectItem>
                   <SelectItem value="GENERAL">Outras Solicitações</SelectItem>
                 </SelectContent>
               </Select>

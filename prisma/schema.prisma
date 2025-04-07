@@ -27,6 +27,7 @@ enum RequestType {
   PLATFORM_ISSUE
   GENERAL
   CAPITAL_REQUEST
+  PLATFORM_REQUEST
 }
 
 enum ProductType {

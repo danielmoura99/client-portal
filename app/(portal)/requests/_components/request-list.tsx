@@ -25,6 +25,7 @@ const requestTypeMap = {
   WITHDRAWAL: "Saque de Recursos",
   PLATFORM_ISSUE: "Problema na Plataforma",
   CAPITAL_REQUEST: "Solicitar Capital(MGT)",
+  PLATFORM_REQUEST: "Solicitar Plataforma(MGT)",
   GENERAL: "Outras Solicitações",
 };
 
