@@ -32,6 +32,7 @@ const requestSchema = z.object({
       "START_DATE_CHANGE",
       "WITHDRAWAL",
       "PLATFORM_ISSUE",
+      "CAPITAL_REQUEST",
       "GENERAL",
     ],
     {
@@ -100,6 +101,9 @@ export function RequestForm() {
                   <SelectItem value="WITHDRAWAL">Saque de Recursos</SelectItem>
                   <SelectItem value="PLATFORM_ISSUE">
                     Problema na Plataforma
+                  </SelectItem>
+                  <SelectItem value="CAPITAL_REQUEST">
+                    Solicitar de Capital(MGT)
                   </SelectItem>
                   <SelectItem value="GENERAL">Outras Solicitações</SelectItem>
                 </SelectContent>

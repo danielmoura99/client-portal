@@ -26,6 +26,7 @@ const requestTypeMap = {
   START_DATE_CHANGE: "Mudança de Data",
   WITHDRAWAL: "Saque de Recursos",
   PLATFORM_ISSUE: "Problema na Plataforma",
+  CAPITAL_REQUEST: "Solicitar de Capital(MGT)",
   GENERAL: "Outras Solicitações",
 };
 

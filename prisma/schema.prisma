@@ -26,6 +26,7 @@ enum RequestType {
   WITHDRAWAL
   PLATFORM_ISSUE
   GENERAL
+  CAPITAL_REQUEST
 }
 
 enum ProductType {
