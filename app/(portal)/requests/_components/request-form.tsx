@@ -103,7 +103,7 @@ export function RequestForm() {
                     Problema na Plataforma
                   </SelectItem>
                   <SelectItem value="CAPITAL_REQUEST">
-                    Solicitar de Capital(MGT)
+                    Solicitar Capital(MGT)
                   </SelectItem>
                   <SelectItem value="GENERAL">Outras Solicitações</SelectItem>
                 </SelectContent>
