@@ -33,6 +33,7 @@ const requestSchema = z.object({
       "WITHDRAWAL",
       "PLATFORM_ISSUE",
       "CAPITAL_REQUEST",
+      "PLATFORM_REQUEST",
       "GENERAL",
     ],
     {
