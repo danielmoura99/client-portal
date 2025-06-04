@@ -1,4 +1,4 @@
-// client-portal/app/api/registration/process/route.ts
+// client-portal/app/api/registration/process/route.ts - VERSÃO CORRIGIDA
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
@@ -10,19 +10,29 @@ export async function POST(request: NextRequest) {
     console.log("[API] Chamada à rota /api/registration/process");
     console.log("[API] Dados recebidos:", data);
 
+    // Função auxiliar para processar IDs que podem vir como string separada por vírgula
+    const processIds = (ids: string | null | undefined): string[] => {
+      if (!ids) return [];
+      return ids
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+    };
+
     // Extrair parâmetros dos dados enviados pelo formulário
-    // Novos parâmetros são passados via objeto urlParams
     let isCombo = false;
-    let mainCourseId = null;
-    let orderBumpCourseIdsParam = null;
-    let additionalCourseIdsParam = null;
+    let mainCourseIds: string[] = [];
+    let orderBumpCourseIds: string[] = [];
+    let additionalCourseIds: string[] = [];
 
     // Verificar se os parâmetros da URL foram incluídos no payload
     if (data.urlParams) {
       isCombo = data.urlParams.isCombo === true;
-      mainCourseId = data.urlParams.courseId;
-      orderBumpCourseIdsParam = data.urlParams.orderBumpCourseIds;
-      additionalCourseIdsParam = data.urlParams.additionalCourseIds;
+
+      // ✅ CORREÇÃO: Processar courseId corretamente mesmo quando vem como "3,5"
+      mainCourseIds = processIds(data.urlParams.courseId);
+      orderBumpCourseIds = processIds(data.urlParams.orderBumpCourseIds);
+      additionalCourseIds = processIds(data.urlParams.additionalCourseIds);
 
       // Remover do payload para não enviar para o serviço externo
       delete data.urlParams;
@@ -30,37 +40,38 @@ export async function POST(request: NextRequest) {
       // Como fallback, tenta extrair da URL da API (comportamento original)
       const url = new URL(request.url);
       isCombo = url.searchParams.get("combo") === "true";
-      mainCourseId = url.searchParams.get("courseId");
-      orderBumpCourseIdsParam = url.searchParams.get("orderBumpCourseIds");
-      additionalCourseIdsParam = url.searchParams.get("additionalCourseIds");
+
+      mainCourseIds = processIds(url.searchParams.get("courseId"));
+      orderBumpCourseIds = processIds(
+        url.searchParams.get("orderBumpCourseIds")
+      );
+      additionalCourseIds = processIds(
+        url.searchParams.get("additionalCourseIds")
+      );
     }
 
     console.log("[API] Parâmetros processados:", {
       isCombo,
-      mainCourseId,
-      orderBumpCourseIdsParam,
-      additionalCourseIdsParam,
+      mainCourseIds,
+      orderBumpCourseIds,
+      additionalCourseIds,
     });
 
     if (!data.type) {
       throw new Error("Tipo de avaliação não especificado");
     }
 
-    // Processar string de IDs para arrays
-    const orderBumpCourseIds = orderBumpCourseIdsParam
-      ? orderBumpCourseIdsParam.split(",").filter(Boolean)
-      : [];
-
-    const additionalCourseIds = additionalCourseIdsParam
-      ? additionalCourseIdsParam.split(",").filter(Boolean)
-      : [];
-
-    // Todos os IDs de cursos a liberar
+    // Todos os IDs de cursos a liberar (agora corretamente processados)
     const allEducationalIds = [
-      ...(isCombo && mainCourseId ? [mainCourseId] : []),
+      ...(isCombo ? mainCourseIds : []),
       ...orderBumpCourseIds,
       ...additionalCourseIds,
     ].filter(Boolean);
+
+    console.log(
+      "[API] IDs de produtos educacionais a processar:",
+      allEducationalIds
+    );
 
     // Determina a URL da API com base no tipo de avaliação
     const adminUrl =
@@ -114,11 +125,6 @@ export async function POST(request: NextRequest) {
       userId = existingUser.id;
       console.log("[API] Usuário existente:", userId);
     }
-
-    console.log(
-      "[API] IDs de produtos educacionais a processar:",
-      allEducationalIds
-    );
 
     // Se há produtos educacionais, processar
     if (allEducationalIds.length > 0) {
@@ -174,7 +180,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Função auxiliar para processar produtos educacionais
+// Função auxiliar para processar produtos educacionais (sem alterações na lógica interna)
 async function processEducationalProducts(userId: string, courseIds: string[]) {
   try {
     console.log("[API] Procurando produtos pelo courseId:", courseIds);
