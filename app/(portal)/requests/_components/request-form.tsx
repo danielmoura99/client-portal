@@ -34,6 +34,7 @@ const requestSchema = z.object({
       "PLATFORM_ISSUE",
       "CAPITAL_REQUEST",
       "PLATFORM_REQUEST",
+      "REAL_ACCOUNT_TRIGGER",
       "GENERAL",
     ],
     {
@@ -108,6 +109,9 @@ export function RequestForm() {
                   </SelectItem>
                   <SelectItem value="PLATFORM_REQUEST">
                     Solicitar Plataforma(MGT)
+                  </SelectItem>
+                  <SelectItem value="REAL_ACCOUNT_TRIGGER">
+                    Gatilho para Conta Real
                   </SelectItem>
                   <SelectItem value="GENERAL">Outras Solicitações</SelectItem>
                 </SelectContent>

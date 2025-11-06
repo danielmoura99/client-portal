@@ -28,6 +28,7 @@ enum RequestType {
   GENERAL
   CAPITAL_REQUEST
   PLATFORM_REQUEST
+  REAL_ACCOUNT_TRIGGER
 }
 
 enum ProductType {

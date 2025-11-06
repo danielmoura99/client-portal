@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "RequestType" ADD VALUE 'REAL_ACCOUNT_TRIGGER';
