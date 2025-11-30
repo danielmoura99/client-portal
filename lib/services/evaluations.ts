@@ -18,6 +18,13 @@ interface Evaluation {
   traderStatus: string;
   startDate?: Date;
   endDate?: Date;
+  platformRenewal?: {
+    platformStartDate: string | null;
+    daysUntilExpiration: number | null;
+    canRenew: boolean;
+    isExpired: boolean;
+    needsRenewal: boolean;
+  };
   // ... outros campos da avaliação
 }
 
