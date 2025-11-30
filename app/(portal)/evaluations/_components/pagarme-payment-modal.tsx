@@ -36,11 +36,11 @@ export function PagarmePaymentModal({
     amount: number;
   } | null>(null);
 
-  // Determinar o valor baseado na plataforma
+  // Determinar o valor baseado na plataforma (para exibição inicial)
   const getAmount = (platform: string): number => {
-    if (platform === "Profit One") return 98.5;
-    if (platform === "Profit Pro") return 226.0;
-    if (platform === "Profit Teste") return 10.0;
+    if (platform === "Profit One") return 98.50;
+    if (platform === "Profit Pro") return 226.00;
+    if (platform === "Profit Teste") return 10.00;
     return 0;
   };
 
@@ -128,8 +128,10 @@ export function PagarmePaymentModal({
   };
 
   const formatCurrency = (value: number) => {
-    // Se o valor vier em centavos (>1000), converter para reais
-    const valueInReais = value > 1000 ? value / 100 : value;
+    // Verificar se é valor em centavos ou reais
+    // Se for >= 100, assumimos que é centavos (API response)
+    // Se for < 100, assumimos que é reais (getAmount local)
+    const valueInReais = value >= 100 ? value / 100 : value;
 
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
