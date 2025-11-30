@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
-import { PaymentModal } from "./payment-modal";
+import { PagarmePaymentModal } from "./pagarme-payment-modal";
 
 interface PaymentButtonProps {
   platform: string;
@@ -29,7 +29,7 @@ export function PaymentButton({
         Pagar Plataforma
       </Button>
 
-      <PaymentModal
+      <PagarmePaymentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         platform={platform}
