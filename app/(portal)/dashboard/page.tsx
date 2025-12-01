@@ -1,67 +1,21 @@
 // app/(portal)/dashboard/page.tsx
-"use client";
-
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { fetchActiveEvaluations } from "./_actions";
 import StatusCard from "./_components/status-card";
 import ActionButtons from "./_components/action-buttons";
 import SupportChannels from "./_components/support-channels";
 import KnowledgeBase from "./_components/knowledge-base";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 
-interface Evaluation {
-  id: string;
-  type: "B3" | "FX";
-  plan: string;
-  traderStatus: string;
-  startDate?: Date;
-  endDate?: Date;
-}
+export default async function DashboardPage() {
+  const session = await getServerSession();
 
-export default function DashboardPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
-
-  useEffect(() => {
-    console.log("Dashboard - Session Status:", status);
-    console.log("Dashboard - Session:", !!session);
-
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [session, status, router]);
-
-  useEffect(() => {
-    async function loadEvaluations() {
-      if (session?.user) {
-        try {
-          const response = await fetch("/api/evaluations/user");
-          if (!response.ok) {
-            throw new Error("Erro ao carregar avaliações");
-          }
-          const data = await response.json();
-          setEvaluations(data.evaluations || []);
-        } catch (error) {
-          console.error("Erro ao carregar avaliações:", error);
-        }
-      }
-    }
-
-    if (session?.user) {
-      loadEvaluations();
-    }
-  }, [session]);
-
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-zinc-400">Carregando...</div>
-      </div>
-    );
+  if (!session) {
+    redirect("/login");
   }
 
-  if (!session) return null;
+  const data = await fetchActiveEvaluations();
+  const evaluations = data?.evaluations || [];
 
   return (
     <div className="p-6 space-y-8">
@@ -70,16 +24,24 @@ export default function DashboardPage() {
           Bem-vindo(a), {session.user?.name}
         </h2>
         <p className="text-zinc-400">
-          Aqui você pode acompanhar suas avaliações e fazer solicitações.
+          Aqui você pode acompanhar suas avaliações ativas e fazer solicitações.
         </p>
       </div>
 
       {/* Status das Avaliações */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {evaluations.map((evaluation) => (
-          <StatusCard key={evaluation.id} evaluation={evaluation} />
-        ))}
-      </div>
+      {evaluations.length === 0 ? (
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-8 text-center">
+          <p className="text-zinc-400">
+            {data?.message || "Você não possui avaliações ativas no momento."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {evaluations.map((evaluation) => (
+            <StatusCard key={evaluation.id} evaluation={evaluation} />
+          ))}
+        </div>
+      )}
 
       {/* Ações Rápidas */}
       <ActionButtons />
