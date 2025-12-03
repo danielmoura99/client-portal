@@ -21,11 +21,12 @@ export async function fetchActiveEvaluations() {
       };
     }
 
-    // Filtrar apenas "Ativo" e "Em Curso"
+    // Filtrar apenas "Ativo", "Em Curso" e "Aguardando Pagamento"
     const activeEvaluations = result.evaluations.filter(
       (evaluation) =>
         evaluation.traderStatus === "Ativo" ||
-        evaluation.traderStatus === "Em Curso"
+        evaluation.traderStatus === "Em Curso" ||
+        evaluation.traderStatus === "Aguardando Pagamento"
     );
 
     return {
