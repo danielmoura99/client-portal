@@ -10,13 +10,13 @@ export default function SupportChannels() {
 
       <div className="space-y-4">
         <a
-          href="https://www.instagram.com/escolatradershouse"
+          href="https://www.instagram.com/thprop_/"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 text-zinc-400 hover:text-zinc-100 transition-colors"
         >
           <Instagram className="w-5 h-5" />
-          @escolatradershouse
+          @thprop_
         </a>
         <a
           href="https://api.whatsapp.com/send?phone=5562993776216"

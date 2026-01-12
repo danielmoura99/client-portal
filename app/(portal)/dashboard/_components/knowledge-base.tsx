@@ -11,11 +11,11 @@ export default function KnowledgeBase() {
 
       <div className="space-y-3">
         <Link
-          href="https://escolatradershouse.com.br/mesaproprietaria/"
+          href="https://escolatradershouse.com.br/regulamento-mesa/"
           className="flex items-center gap-3 text-zinc-400 hover:text-zinc-100 transition-colors"
         >
           <BookOpen className="w-5 h-5" />
-          Regras da Avaliação
+          Regulamento
         </Link>
 
         <Link

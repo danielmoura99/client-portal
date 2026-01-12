@@ -11,7 +11,7 @@ export default async function EvaluationsPage() {
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-zinc-100">Minhas Avaliações</h1>
+        <h1 className="text-3xl font-bold text-zinc-100">Meus Planos</h1>
         <p className="text-zinc-400">
           Acompanhe o status e progresso das suas avaliações e contas
           remuneradas

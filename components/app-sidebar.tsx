@@ -34,7 +34,7 @@ const data = {
           url: "/dashboard",
         },
         {
-          title: "Avaliações",
+          title: "Meus Planos",
           url: "/evaluations",
         },
         {

@@ -13,7 +13,7 @@ export default function ActionButtons() {
           className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg p-4 transition-colors"
         >
           <PlusCircle className="w-5 h-5" />
-          Iniciar Nova Avaliação
+          Comprar Novo Plano
         </a>
 
         <Link

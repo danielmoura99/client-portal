@@ -17,21 +17,23 @@ export default function EvaluationsTable({
 }: EvaluationsTableProps) {
   const [showAll, setShowAll] = useState(false);
 
-  // Filtrar apenas "Ativo", "Em Curso" e "Aguardando Pagamento" por padrão
+  // Filtrar apenas "Ativo", "Em Curso", "Aguardando Pagamento" e "Aguardando Inicio" por padrão
   const filteredEvaluations = showAll
     ? evaluations
     : evaluations.filter(
         (evaluation) =>
           evaluation.traderStatus === "Ativo" ||
           evaluation.traderStatus === "Em Curso" ||
-          evaluation.traderStatus === "Aguardando Pagamento"
+          evaluation.traderStatus === "Aguardando Pagamento" ||
+          evaluation.traderStatus === "Aguardando Inicio"
       );
 
   const activeCount = evaluations.filter(
     (e) =>
       e.traderStatus === "Ativo" ||
       e.traderStatus === "Em Curso" ||
-      e.traderStatus === "Aguardando Pagamento"
+      e.traderStatus === "Aguardando Pagamento" ||
+      e.traderStatus === "Aguardando Inicio"
   ).length;
 
   return (
