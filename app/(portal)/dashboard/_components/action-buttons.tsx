@@ -7,7 +7,7 @@ export default function ActionButtons() {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <>
         <a
-          href="https://escolatradershouse.com.br/mesaproprietaria/"
+          href="https://escolatradershouse.com.br/thprop/"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg p-4 transition-colors"
