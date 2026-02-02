@@ -18,6 +18,7 @@ interface Evaluation {
   traderStatus: string;
   startDate?: Date;
   endDate?: Date;
+  cancellationDate?: Date;
   platformRenewal?: {
     platformStartDate: string | null;
     daysUntilExpiration: number | null;

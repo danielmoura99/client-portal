@@ -8,13 +8,14 @@ interface EvaluationCardProps {
     status: string;
     startDate: string | null;
     endDate: string | null;
+    cancellationDate?: string | null;
     platform: string;
     plan: string;
   };
 }
 
 export function EvaluationCard({ evaluation }: EvaluationCardProps) {
-  const { status, startDate, endDate, platform, plan } = evaluation;
+  const { status, startDate, endDate, cancellationDate, platform, plan } = evaluation;
 
   function getRemainingDays() {
     if (!startDate || !endDate) return null;
@@ -49,10 +50,10 @@ export function EvaluationCard({ evaluation }: EvaluationCardProps) {
             </div>
           )}
 
-          {endDate && (
+          {status === "Finalizada" && cancellationDate && (
             <div>
               <p className="text-sm text-zinc-400">Fim</p>
-              <p className="text-zinc-100">{formatDate(new Date(endDate))}</p>
+              <p className="text-zinc-100">{formatDate(new Date(cancellationDate))}</p>
             </div>
           )}
 

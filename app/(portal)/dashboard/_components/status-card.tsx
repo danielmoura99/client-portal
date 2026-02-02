@@ -12,6 +12,7 @@ interface StatusCardProps {
     traderStatus: string | null;
     startDate: Date | null;
     endDate: Date | null;
+    cancellationDate?: Date | null;
     platformRenewal: {
       platformStartDate: Date | null;
       daysUntilExpiration: number | null;
@@ -42,10 +43,11 @@ function getStatusColor(status: string | null) {
 
 function getDaysColor(days: number | null) {
   if (days === null) return "text-zinc-400";
-  if (days < 0) return "text-red-600 font-bold";
-  if (days <= 3) return "text-red-500 font-medium";
-  if (days <= 7) return "text-yellow-500";
-  return "text-green-500";
+  if (days < 0) return "text-red-600 font-bold"; // Vencido
+  if (days === 0) return "text-red-500 font-bold"; // Dia do vencimento
+  if (days <= 3) return "text-orange-500 font-medium"; // Alerta (3 dias ou menos)
+  if (days <= 7) return "text-yellow-500"; // Atenção
+  return "text-green-500"; // Normal
 }
 
 export default function StatusCard({ evaluation }: StatusCardProps) {
@@ -80,10 +82,10 @@ export default function StatusCard({ evaluation }: StatusCardProps) {
             <span className="font-medium">Início Avaliação:</span>{" "}
             {formatDate(new Date(evaluation.startDate))}
           </p>
-          {evaluation.endDate && (
+          {traderStatus === "Finalizada" && evaluation.cancellationDate && (
             <p className="text-zinc-400">
               <span className="font-medium">Fim Avaliação:</span>{" "}
-              {formatDate(new Date(evaluation.endDate))}
+              {formatDate(new Date(evaluation.cancellationDate))}
             </p>
           )}
         </div>
@@ -110,22 +112,27 @@ export default function StatusCard({ evaluation }: StatusCardProps) {
                   {platformRenewal.daysUntilExpiration !== null
                     ? platformRenewal.daysUntilExpiration < 0
                       ? `Vencida há ${Math.abs(platformRenewal.daysUntilExpiration)} dias`
-                      : `${platformRenewal.daysUntilExpiration + 1} dias`
+                      : platformRenewal.daysUntilExpiration === 0
+                        ? "Vence hoje!"
+                        : `${platformRenewal.daysUntilExpiration + 1} dias`
                     : "N/A"}
                 </span>
               </p>
             </div>
 
             {/* Botão de Pagamento (se elegível) */}
-            {platformRenewal.canRenew && platform && (
-              <div className="pt-2">
-                <PaymentButton
-                  platform={platform}
-                  evaluationId={evaluation.id}
-                  renewalType={evaluation.renewalType}
-                />
-              </div>
-            )}
+            {platformRenewal.canRenew &&
+              platformRenewal.daysUntilExpiration !== null &&
+              platformRenewal.daysUntilExpiration <= 0 &&
+              platform && (
+                <div className="pt-2">
+                  <PaymentButton
+                    platform={platform}
+                    evaluationId={evaluation.id}
+                    renewalType={evaluation.renewalType}
+                  />
+                </div>
+              )}
           </div>
         )}
     </div>

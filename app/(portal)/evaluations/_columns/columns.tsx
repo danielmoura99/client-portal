@@ -14,6 +14,7 @@ export type Evaluation = {
   traderStatus: string;
   startDate: string | null;
   endDate: string | null;
+  cancellationDate?: string | null;
   platformRenewal?: {
     platformStartDate: string | null;
     daysUntilExpiration: number | null;
@@ -52,8 +53,14 @@ export const columns: ColumnDef<Evaluation>[] = [
     accessorKey: "endDate",
     header: "Fim",
     cell: ({ row }) => {
-      const endDate = row.original.endDate;
-      return endDate ? formatDate(new Date(endDate)) : "-";
+      const { traderStatus, cancellationDate } = row.original;
+
+      // Exibir cancellationDate apenas quando status for "Finalizada"
+      if (traderStatus === "Finalizada" && cancellationDate) {
+        return formatDate(new Date(cancellationDate));
+      }
+
+      return "-";
     },
   },
   {
@@ -88,8 +95,11 @@ export const columns: ColumnDef<Evaluation>[] = [
       if (days < 0) {
         colorClass = "text-red-600 font-bold";
         text = `Vencido (${Math.abs(days)} dias)`;
+      } else if (days === 0) {
+        colorClass = "text-red-500 font-bold";
+        text = "Vence hoje!";
       } else if (days <= 3) {
-        colorClass = "text-red-500 font-medium";
+        colorClass = "text-orange-500 font-medium";
       } else if (days <= 7) {
         colorClass = "text-yellow-500";
       }
@@ -103,8 +113,14 @@ export const columns: ColumnDef<Evaluation>[] = [
     cell: ({ row }) => {
       const { platform, platformRenewal, renewalType } = row.original;
 
-      // Só mostrar botão se pode renovar (≤3 dias)
-      if (!platformRenewal?.canRenew) return null;
+      // Só mostrar botão no dia do vencimento ou depois (daysUntilExpiration <= 0)
+      if (
+        !platformRenewal?.canRenew ||
+        platformRenewal.daysUntilExpiration === null ||
+        platformRenewal.daysUntilExpiration > 0
+      ) {
+        return null;
+      }
 
       return (
         <PaymentButton
