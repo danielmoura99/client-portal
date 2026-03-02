@@ -11,7 +11,7 @@ export default function KnowledgeBase() {
 
       <div className="space-y-3">
         <Link
-          href="https://escolatradershouse.com.br/regulamento-mesa/"
+          href="https://thprop.com.br/regulamento/"
           className="flex items-center gap-3 text-zinc-400 hover:text-zinc-100 transition-colors"
         >
           <BookOpen className="w-5 h-5" />
