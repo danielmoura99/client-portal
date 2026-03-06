@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(ls -la /e/client-portal/app/\\\\\\(portal\\\\\\)/dashboard/_*)",
+      "Bash(ls -la /e/client-portal/app/\\\\\\(portal\\\\\\)/evaluations/_*)"
     ],
     "deny": [],
     "ask": []

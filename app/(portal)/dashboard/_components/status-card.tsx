@@ -114,7 +114,7 @@ export default function StatusCard({ evaluation }: StatusCardProps) {
                       ? `Vencida há ${Math.abs(platformRenewal.daysUntilExpiration)} dias`
                       : platformRenewal.daysUntilExpiration === 0
                         ? "Vence hoje!"
-                        : `${platformRenewal.daysUntilExpiration + 1} dias`
+                        : `${platformRenewal.daysUntilExpiration} dias`
                     : "N/A"}
                 </span>
               </p>

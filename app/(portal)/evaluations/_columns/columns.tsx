@@ -90,7 +90,7 @@ export const columns: ColumnDef<Evaluation>[] = [
 
       const days = renewal.daysUntilExpiration;
       let colorClass = "text-green-500";
-      let text = `${days + 1} dias`;
+      let text = `${days} dias`;
 
       if (days < 0) {
         colorClass = "text-red-600 font-bold";
