@@ -3,6 +3,8 @@ import { fetchUserEvaluations } from "./_actions";
 import EvaluationsTable from "./_components/evaluations-table";
 import { Card, CardContent } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export default async function EvaluationsPage() {
   const data = await fetchUserEvaluations();
   const evaluations = data?.evaluations || [];
