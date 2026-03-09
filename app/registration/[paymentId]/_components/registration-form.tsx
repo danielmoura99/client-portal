@@ -60,14 +60,14 @@ async function checkExistingUser(email: string, document: string) {
   try {
     const response = await fetch(
       `/api/registration/check-user?email=${encodeURIComponent(
-        email
+        email,
       )}&document=${encodeURIComponent(document)}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -112,7 +112,7 @@ export function RegistrationForm({
       if (customerEmail || customerDocument) {
         const existingUser = await checkExistingUser(
           customerEmail,
-          customerDocument
+          customerDocument,
         );
 
         if (existingUser) {
@@ -192,7 +192,7 @@ export function RegistrationForm({
         throw new Error(
           responseData.error ||
             responseData.message ||
-            "Erro ao processar registro"
+            "Erro ao processar registro",
         );
       }
 
@@ -365,7 +365,7 @@ export function RegistrationForm({
                           />
                         </FormControl>
                         <FormDescription className="text-xs text-zinc-400">
-                          Data utilizada para liberar e iniciar sua avaliação.
+                          Data utilizada para liberar sua plataforma.
                         </FormDescription>
                         <FormMessage className="text-xs text-red-500" />
                       </FormItem>
