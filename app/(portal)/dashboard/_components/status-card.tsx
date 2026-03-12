@@ -53,7 +53,7 @@ function getDaysColor(days: number | null) {
 export default function StatusCard({ evaluation }: StatusCardProps) {
   const { traderStatus, platformRenewal, platform, plan } = evaluation;
   const showPlatformInfo =
-    traderStatus === "Em Curso" || traderStatus === "Ativo";
+    traderStatus === "Em Curso" || traderStatus === "Ativo" || traderStatus === "Aguardando Pagamento";
 
   // Verificar se platformRenewal existe
   if (!platformRenewal) {

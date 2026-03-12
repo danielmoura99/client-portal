@@ -69,8 +69,8 @@ export const columns: ColumnDef<Evaluation>[] = [
     cell: ({ row }) => {
       const { traderStatus, platformRenewal } = row.original;
 
-      // Só exibir para "Em Curso" ou "Ativo"
-      if (traderStatus !== "Em Curso" && traderStatus !== "Ativo") return "-";
+      // Só exibir para "Em Curso", "Ativo" ou "Aguardando Pagamento"
+      if (traderStatus !== "Em Curso" && traderStatus !== "Ativo" && traderStatus !== "Aguardando Pagamento") return "-";
 
       const platformStartDate = platformRenewal?.platformStartDate;
       return platformStartDate ? formatDate(new Date(platformStartDate)) : "-";
@@ -82,8 +82,8 @@ export const columns: ColumnDef<Evaluation>[] = [
     cell: ({ row }) => {
       const { traderStatus, platformRenewal } = row.original;
 
-      // Só exibir para "Em Curso" ou "Ativo"
-      if (traderStatus !== "Em Curso" && traderStatus !== "Ativo") return "-";
+      // Só exibir para "Em Curso", "Ativo" ou "Aguardando Pagamento"
+      if (traderStatus !== "Em Curso" && traderStatus !== "Ativo" && traderStatus !== "Aguardando Pagamento") return "-";
 
       const renewal = platformRenewal;
       if (!renewal || renewal.daysUntilExpiration === null) return "-";
