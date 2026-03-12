@@ -123,7 +123,7 @@ export default function StatusCard({ evaluation }: StatusCardProps) {
             {/* Botão de Pagamento (se elegível) */}
             {platformRenewal.canRenew &&
               platformRenewal.daysUntilExpiration !== null &&
-              platformRenewal.daysUntilExpiration <= 0 &&
+              platformRenewal.daysUntilExpiration <= 1 &&
               platform && (
                 <div className="pt-2">
                   <PaymentButton

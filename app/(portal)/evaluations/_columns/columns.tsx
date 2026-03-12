@@ -113,11 +113,11 @@ export const columns: ColumnDef<Evaluation>[] = [
     cell: ({ row }) => {
       const { platform, platformRenewal, renewalType } = row.original;
 
-      // Só mostrar botão no dia do vencimento ou depois (daysUntilExpiration <= 0)
+      // Só mostrar botão quando falta 1 dia ou menos (daysUntilExpiration <= 1)
       if (
         !platformRenewal?.canRenew ||
         platformRenewal.daysUntilExpiration === null ||
-        platformRenewal.daysUntilExpiration > 0
+        platformRenewal.daysUntilExpiration > 1
       ) {
         return null;
       }
