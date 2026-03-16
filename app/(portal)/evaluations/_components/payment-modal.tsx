@@ -119,9 +119,8 @@ export function PaymentModal({
     }
   };
 
-  const formatCurrency = (value: number) => {
-    // Se o valor vier em centavos (>1000), converter para reais
-    const valueInReais = value > 1000 ? value / 100 : value;
+  const formatCurrency = (value: number, isCents = false) => {
+    const valueInReais = isCents ? value / 100 : value;
 
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -175,7 +174,7 @@ export function PaymentModal({
               <div className="text-center">
                 <p className="text-sm text-zinc-400 mb-2">Valor:</p>
                 <p className="text-2xl font-bold text-green-500">
-                  {formatCurrency(pixData.amount)}
+                  {formatCurrency(pixData.amount, true)}
                 </p>
               </div>
 
