@@ -48,31 +48,13 @@ export function PagarmePaymentModal({
     setIsGenerating(true);
 
     try {
-      // Chamar API do trader-evaluation para gerar PIX via PAGARME
-      const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL;
-      const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
-
-      console.log("[Pagarme Modal] ADMIN_API_URL:", ADMIN_API_URL);
-      console.log(
-        "[Pagarme Modal] API_KEY:",
-        API_KEY ? "***" + API_KEY.slice(-4) : "undefined"
-      );
-      console.log("[Pagarme Modal] Evaluation ID:", evaluationId);
-      console.log("[Pagarme Modal] Renewal Type:", renewalType);
-
-      if (!ADMIN_API_URL) {
-        throw new Error("NEXT_PUBLIC_ADMIN_API_URL não configurada");
-      }
-
-      // URL específica para Pagarme Platform Renewal
-      const url = `${ADMIN_API_URL}/api/client-portal/pagarme/generate-platform-pix`;
-      console.log("[Pagarme Modal] Calling URL:", url);
+      // Chamar rota proxy local (API_KEY fica server-side)
+      const url = `/api/renewal/pagarme/generate-pix`;
 
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
         },
         body: JSON.stringify({
           evaluationId,
@@ -87,11 +69,6 @@ export function PagarmePaymentModal({
       }
 
       const data = await response.json();
-
-      console.log("[Pagarme Modal] PIX gerado com sucesso:", {
-        orderId: data.renewal.orderId,
-        amount: data.renewal.amount,
-      });
 
       setPixData({
         pixCode: data.renewal.pixCode,

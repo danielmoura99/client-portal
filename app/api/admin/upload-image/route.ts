@@ -30,8 +30,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Gerar um nome único para o arquivo
-    const fileName = `course-covers/${Date.now()}-${file.name}`;
+    // Limite de 5MB para imagens
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return Response.json(
+        { error: "Imagem deve ter no máximo 5MB" },
+        { status: 400 }
+      );
+    }
+
+    // Sanitizar filename: remover caracteres especiais e espaços
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100);
+    const fileName = `course-covers/${Date.now()}-${safeName}`;
 
     // Fazer upload para o Vercel Blob
     const { url } = await put(fileName, file, {

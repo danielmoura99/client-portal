@@ -48,32 +48,16 @@ export function PaymentModal({
 
     try {
       // Chamar API do trader-evaluation para gerar PIX via BTG
-      const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL;
-      const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
-
-      console.log("ADMIN_API_URL:", ADMIN_API_URL);
-      console.log(
-        "API_KEY:",
-        API_KEY ? "***" + API_KEY.slice(-4) : "undefined"
-      );
-      console.log("Evaluation ID:", evaluationId);
-
-      if (!ADMIN_API_URL) {
-        throw new Error("NEXT_PUBLIC_ADMIN_API_URL não configurada");
-      }
-
-      const url = `${ADMIN_API_URL}/api/client-portal/generate-platform-pix`;
-      console.log("Calling URL:", url);
+      const url = `/api/renewal/generate-pix`;
 
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
         },
         body: JSON.stringify({
           evaluationId,
-          renewalType, // Usar o tipo correto recebido do componente
+          renewalType,
         }),
       });
 

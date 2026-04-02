@@ -2,10 +2,21 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 import { hash } from "bcryptjs";
+import { z } from "zod";
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token é obrigatório"),
+  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+})
 
 export async function POST(req: NextRequest) {
   try {
-    const { token, password } = await req.json();
+    const body = await req.json();
+    const parsed = resetPasswordSchema.safeParse(body);
+    if (!parsed.success) {
+      return Response.json({ error: parsed.error.errors[0].message }, { status: 400 });
+    }
+    const { token, password } = parsed.data;
 
     // Buscar usuário com token válido
     const user = await prisma.user.findFirst({
@@ -25,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Hash da nova senha
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = await hash(password, 12);
 
     // Atualizar usuário
     await prisma.user.update({

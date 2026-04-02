@@ -1,5 +1,5 @@
 // app/(portal)/educational/_actions/video-actions.ts
-"use client";
+"use server";
 
 import { PandaVideo, VideoEmbedData } from "@/types/panda";
 
@@ -18,7 +18,7 @@ export async function getVideoEmbed(videoId: string): Promise<VideoEmbedData> {
         method: "GET",
         headers: {
           accept: "application/json",
-          Authorization: process.env.NEXT_PUBLIC_PANDA_API_KEY!,
+          Authorization: process.env.PANDA_API_KEY!,
         },
       }
     );
@@ -45,7 +45,7 @@ export async function getVideoEmbed(videoId: string): Promise<VideoEmbedData> {
 }
 
 export async function getFolderVideos(): Promise<PandaVideo[]> {
-  if (!process.env.NEXT_PUBLIC_PANDA_API_KEY) {
+  if (!process.env.PANDA_API_KEY) {
     console.error("PANDA_API_KEY não configurada");
     return [];
   }
@@ -57,7 +57,7 @@ export async function getFolderVideos(): Promise<PandaVideo[]> {
         method: "GET",
         headers: {
           accept: "application/json",
-          Authorization: process.env.NEXT_PUBLIC_PANDA_API_KEY,
+          Authorization: process.env.PANDA_API_KEY,
         },
       }
     );

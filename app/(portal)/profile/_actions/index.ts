@@ -4,6 +4,8 @@
 import { User } from "@/types";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 
 export async function getUserProfile(userId: string): Promise<User | null> {
   return await prisma.user.findUnique({
@@ -31,6 +33,12 @@ export async function updateUserProfile(
     zipCode?: string;
   }
 ) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.id !== userId) {
+    throw new Error("Não autorizado");
+  }
+
   // Atualiza no banco local
   await prisma.user.update({
     where: { id: userId },

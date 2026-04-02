@@ -14,11 +14,34 @@ export async function POST(req: Request) {
 
     const data = await req.json();
 
+    const validTypes = [
+      "EVALUATION_APPROVAL",
+      "START_DATE_CHANGE",
+      "WITHDRAWAL",
+      "PLATFORM_ISSUE",
+      "GENERAL",
+      "CAPITAL_REQUEST",
+      "PLATFORM_REQUEST",
+      "REAL_ACCOUNT_TRIGGER",
+    ] as const;
+
+    if (!data.type || !validTypes.includes(data.type)) {
+      return new NextResponse("Tipo de chamado inválido", { status: 400 });
+    }
+
+    if (!data.description || typeof data.description !== "string" || data.description.trim().length === 0) {
+      return new NextResponse("Descrição é obrigatória", { status: 400 });
+    }
+
+    if (data.description.length > 5000) {
+      return new NextResponse("Descrição deve ter no máximo 5000 caracteres", { status: 400 });
+    }
+
     const request = await prisma.request.create({
       data: {
         userId: session.user.id,
         type: data.type,
-        description: data.description,
+        description: data.description.trim(),
       },
     });
 

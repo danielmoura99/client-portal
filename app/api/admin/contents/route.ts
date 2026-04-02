@@ -40,8 +40,18 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File | null;
 
     if (file) {
-      // Criar uma estrutura de diretório virtual para organização
-      const fileName = `contents/${productId}/${file.name}`;
+      // Limite de 50MB para conteúdos
+      const MAX_SIZE = 50 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        return Response.json(
+          { error: "Arquivo deve ter no máximo 50MB" },
+          { status: 400 }
+        );
+      }
+
+      // Sanitizar filename: remover caracteres especiais e espaços
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100);
+      const fileName = `contents/${productId}/${safeName}`;
 
       // Upload para Vercel Blob
       const { url } = await put(fileName, file, {

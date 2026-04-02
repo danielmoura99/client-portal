@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 import crypto from "crypto";
 import { sendPasswordResetEmail, verifyEmailConfig } from "@/lib/email-service";
+import { z } from "zod";
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Email inválido"),
+})
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +19,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email } = await req.json();
+    const body = await req.json();
+    const parsed = forgotPasswordSchema.safeParse(body);
+    if (!parsed.success) {
+      return Response.json({ error: parsed.error.errors[0].message }, { status: 400 });
+    }
+    const { email } = parsed.data;
 
     const user = await prisma.user.findUnique({
       where: { email },

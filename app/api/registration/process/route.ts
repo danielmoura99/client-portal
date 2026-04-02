@@ -1,4 +1,4 @@
-// client-portal/app/api/registration/process/route.ts - VERSÃO CORRIGIDA
+// client-portal/app/api/registration/process/route.ts
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
@@ -100,9 +100,9 @@ export async function POST(request: NextRequest) {
 
     // Se não existir usuário, cria um novo
     if (!existingUser) {
-      // Criar senha inicial (últimos 4 dígitos do CPF)
+      // Senha inicial = últimos 4 dígitos do CPF (usuário é obrigado a trocar no primeiro acesso)
       initialPassword = data.cpf.slice(-4);
-      const hashedPassword = await hash(initialPassword, 10);
+      const hashedPassword = await hash(initialPassword, 12);
 
       // Criar usuário no portal do cliente
       const newUser = await prisma.user.create({

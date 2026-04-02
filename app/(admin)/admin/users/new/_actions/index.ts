@@ -51,7 +51,7 @@ export async function createUser(data: z.infer<typeof userSchema>) {
     }
 
     // Hash da senha
-    const hashedPassword = await hash(validatedData.password, 10);
+    const hashedPassword = await hash(validatedData.password, 12);
 
     // Criar usuário
     const user = await prisma.user.create({

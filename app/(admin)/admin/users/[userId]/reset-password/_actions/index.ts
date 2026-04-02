@@ -26,7 +26,7 @@ export async function resetUserPassword(userId: string, newPassword: string) {
     }
 
     // Hash da nova senha
-    const hashedPassword = await hash(newPassword, 10);
+    const hashedPassword = await hash(newPassword, 12);
 
     // Atualizar a senha do usuário
     await prisma.user.update({
