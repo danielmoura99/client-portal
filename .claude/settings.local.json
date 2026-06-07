@@ -8,7 +8,8 @@
       "Bash(git log:*)",
       "Bash(grep -r \"NEXT_PUBLIC_ADMIN_API_URL\\\\|API_KEY\" /e/client-portal/app --include=*.ts --include=*.tsx)",
       "Bash(grep -r 'prisma\\\\.$queryRaw\\\\|prisma\\\\.$executeRaw' /e/client-portal '--include=*.ts' '--include=*.tsx')",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": []

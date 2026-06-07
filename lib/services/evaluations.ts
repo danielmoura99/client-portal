@@ -50,16 +50,16 @@ export async function getClientEvaluations(session: ClientSession) {
       }
     );
 
-    // Buscar avaliações FX
-    const responseFX = await fetch(
-      `${ADMIN_API_URL_FX}/api/client-evaluations?${queryParams}`,
-      {
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-        },
-        next: { revalidate: 0 },
-      }
-    );
+    // Buscar avaliações FX (desabilitado temporariamente)
+    // const responseFX = await fetch(
+    //   `${ADMIN_API_URL_FX}/api/client-evaluations?${queryParams}`,
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${API_KEY}`,
+    //     },
+    //     next: { revalidate: 0 },
+    //   }
+    // );
 
     const evaluations = [];
 
@@ -76,18 +76,18 @@ export async function getClientEvaluations(session: ClientSession) {
       }
     }
 
-    // Processar FX
-    if (responseFX.ok) {
-      const dataFX = await responseFX.json();
-      if (dataFX.evaluations?.length > 0) {
-        evaluations.push(
-          ...dataFX.evaluations.map((evaluation: Evaluation) => ({
-            ...evaluation,
-            type: "FX",
-          }))
-        );
-      }
-    }
+    // Processar FX (desabilitado temporariamente)
+    // if (responseFX.ok) {
+    //   const dataFX = await responseFX.json();
+    //   if (dataFX.evaluations?.length > 0) {
+    //     evaluations.push(
+    //       ...dataFX.evaluations.map((evaluation: Evaluation) => ({
+    //         ...evaluation,
+    //         type: "FX",
+    //       }))
+    //     );
+    //   }
+    // }
 
     // Se nenhuma avaliação foi encontrada
     if (evaluations.length === 0) {

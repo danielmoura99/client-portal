@@ -25,6 +25,11 @@ export async function PATCH(req: Request, context: RequestContext) {
 
     const data = await req.json();
 
+    const validStatuses = ["PENDING", "IN_ANALYSIS", "COMPLETED"] as const;
+    if (!data.status || !validStatuses.includes(data.status)) {
+      return new NextResponse("Status inválido", { status: 400 });
+    }
+
     const request = await prisma.request.update({
       where: { id: requestId },
       data: { status: data.status },

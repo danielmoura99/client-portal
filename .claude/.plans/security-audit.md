@@ -166,7 +166,7 @@ Auditoria completa identificou **9 vulnerabilidades criticas**, **7 altas** e **
 
 **Remediacao:**
 - [ ] **AP-001**: Verificar e configurar CORS adequadamente
-- [ ] **AP-002**: Implementar rate limiting com Upstash Redis ou similar
+- [ ] **AP-002**: Implementar rate limiting com Upstash Redis ou similar — PENDENTE (requer decisao de infra: Redis/Upstash ou in-memory)
 - [ ] **AP-004**: Adicionar paginacao (skip/take) em listagens
 - [ ] **AP-007**: Remover rota duplicada em `/app/registration/process`
 
@@ -389,8 +389,23 @@ Apos cada sprint, verificar:
 | 2026-04-01 | Fase 3: Classificacao de risco | Claude | Concluido |
 | 2026-04-01 | Fase 4: Plano de remediacao criado | Claude | Concluido |
 | 2026-04-02 | Sprint 1: Fixes criticos implementados | Claude | Concluido |
-| 2026-04-02 | Sprint 2: Fixes altos implementados | Claude | Concluido |
-| - | Sprint 3: Fixes medios | - | Pendente |
+| 2026-04-02 | Sprint 2: Fixes altos implementados | Claude | Concluido (rate limiting pendente — requer decisao de infra) |
+| 2026-04-02 | Sprint 3: Fixes medios implementados | Claude | Concluido (rota duplicada + session duration pendentes — aguardando decisao) |
+
+## Sprint 3 — Detalhe dos Fixes (2026-04-02)
+
+| # | Fix | Arquivos modificados | Status |
+|---|-----|----------------------|--------|
+| SH-001..005 | Security headers adicionados | `next.config.ts` — X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS, Permissions-Policy em todas as rotas | ✅ |
+| DP-001 | Next.js atualizado (critico) | `package.json` — 15.1.9 → 15.5.14. Corrige: Auth Bypass Middleware, SSRF, Cache Confusion, Content Injection, Server Actions Source Exposure | ✅ |
+| DP-001 | Vulnerabilidades moderadas corrigidas | `npm audit fix --legacy-peer-deps` — brace-expansion e outras | ✅ |
+| DP-001 | Pendentes (breaking change) | `nodemailer` 6→8, `@vercel/blob` → 2.3.3 — requerem teste antes de atualizar | ⏳ |
+| AP-006 | Validacao enum RequestStatus | `api/request/[requestId]/status/route.ts` — whitelist PENDING/IN_ANALYSIS/COMPLETED | ✅ |
+| SS-002 | Session duration | PENDENTE — 30 dias, aguardando decisao do produto | ⏳ |
+| AP-007 | Rota duplicada /app/registration/process/ | Deletada — frontend sempre usa /api/registration/process (confirmado em registration-form.tsx:164) | ✅ |
+| SS-002 | Session duration 30 → 7 dias | `api/auth/[...nextauth]/options.ts` — usuarios precisam relogar semanalmente | ✅ |
+| DP-001 | nodemailer 6→8 e @vercel/blob breaking changes | PENDENTE — requerem deploy separado com teste de regressao em email e uploads | ⏳ |
+| AP-002 | Rate limiting | PENDENTE — requer decisao de infra (Redis/Upstash ou in-memory) | ⏳ |
 
 ## Sprint 2 — Detalhe dos Fixes (2026-04-02)
 
